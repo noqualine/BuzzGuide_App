@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buzz Guide Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+
+    <div id="loginScreen">
+        <div class="login-card">
+            <h2>🔒 เข้าสู่ระบบ</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;">Buzz Guide Business Planner</p>
+            <input type="password" id="pinInput" placeholder="กรอกรหัส PIN" maxlength="4" onkeypress="handleEnter(event)">
+            <button class="btn-main" style="width: 100%;" onclick="verifyPIN()">เข้าใช้งาน</button>
+        </div>
+    </div>
+
+    <div id="appContent">
+        <nav class="navbar">
+            <h2>Buzz Guide Planner</h2>
+            <div style="display: flex; align-items: center;">
+                <div class="nav-links">
+                    <button onclick="switchTab('dashboard', this)">ภาพรวม (Dashboard)</button>
+                    <button class="active" onclick="switchTab('contacts', this)">รายชื่อ (Contacts)</button>
+                    <button onclick="switchTab('goals', this)">เป้าหมาย (Goals)</button>
+                    <button onclick="switchTab('daily', this)">งานรายวัน (Daily)</button>
+                </div>
+                <select class="theme-selector" onchange="changeTheme(this.value)" id="themeSelect">
+                    <option value="morning">🌤️ Morning (Light)</option>
+                    <option value="sakura">🌸 Sakura (Pink)</option>
+                    <option value="bee">🐝 Bee (Yellow)</option>
+                    <option value="midnight">🌙 Midnight (Dark)</option>
+                </select>
+            </div>
+        </nav>
+
+        <div class="container">
+            
+            <div id="dashboard" class="section">
+                <div class="card">
+                    <h3>📊 ภาพรวมธุรกิจ (Dashboard)</h3>
+                    <p style="margin-top: 10px; color: var(--text-muted);">ระบบกำลังอยู่ในระหว่างการพัฒนา... สลับไปที่แท็บ "รายชื่อ" เพื่อเริ่มทำงาน</p>
+                </div>
+            </div>
+
+            <div id="contacts" class="section active"></div>
+
+            <div id="goals" class="section"></div>
+
+            <div id="daily" class="section">
+                <div class="card">
+                    <h3>📝 งานรายวัน (Daily Routine)</h3>
+                    <p style="margin-top: 10px; color: var(--text-muted);">รอการพัฒนาในสเตปต่อไป...</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="contacts.js"></script>
+    <script src="goals.js"></script>
+</body>
+</html>
