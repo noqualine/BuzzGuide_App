@@ -7,11 +7,7 @@
    1. DESIGN TOKENS & VARIABLES (ตัวแปรสีและขนาด)
 ========================================= */
 :root {
-    /* Colors - Modern Slate & Indigo Palette */
-    --primary: #4F46E5;       
-    --primary-hover: #4338CA; 
-    --primary-light: #EEF2FF; 
-    
+    /* 🌟 ลบสี Primary เดิมออก เพราะเราใช้จาก Pokémon Themes แทนแล้ว */
     --bg-body: #F8FAFC;       
     --bg-surface: #FFFFFF;    
     
@@ -41,19 +37,18 @@
    2. RESET & BASE (ตั้งค่าพื้นฐาน)
 ========================================= */
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Prompt', sans-serif; }
-body { background-color: var(--bg-body); color: var(--text-main); font-size: 14px; -webkit-font-smoothing: antialiased; }
+
+/* 🌟 ยุบรวม Transition พื้นหลังมาไว้ที่นี่ที่เดียว */
+body { 
+    background-color: var(--bg-body); 
+    color: var(--text-main); 
+    font-size: 14px; 
+    -webkit-font-smoothing: antialiased; 
+    transition: background-color 0.5s ease; /* เพิ่มบรรทัดนี้เข้ามา */
+}
+
 a { text-decoration: none; color: inherit; }
 button, input, select, textarea { font-family: inherit; outline: none; }
-
-/* Scrollbar สไตล์โมเดิร์น */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-/* ซ่อนคลาสตามขนาดจอ */
-.mobile-only { display: none !important; }
-.desktop-only { display: block !important; }
 
 /* =========================================
    3. APP LAYOUT (โครงสร้างหน้าจอหลัก)
@@ -107,15 +102,28 @@ button, input, select, textarea { font-family: inherit; outline: none; }
 
 /* Avatar & Badges */
 .avatar-circle { width: 38px; height: 38px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0; text-transform: uppercase; border: 1px solid rgba(79, 70, 229, 0.1); }
-.colored-select { width: fit-content; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; text-align: center; border: 1px solid transparent; cursor: pointer; }
+.colored-select { width: fit-content; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; text-align: center; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; }
 .colored-select option { background: var(--bg-surface); color: var(--text-main); }
-.type-jogger { background: var(--bg-body); color: var(--text-muted); border-color: var(--border-color); }
-.type-sponsor { background: var(--status-yellow-bg); color: var(--status-yellow-text); }
-.type-customer { background: var(--status-green-bg); color: var(--status-green-text); }
-.type-abo { background: var(--status-purple-bg); color: var(--status-purple-text); }
-.type-mem { background: var(--status-red-bg); color: var(--status-red-text); }
-.status-list { background: var(--bg-body); color: var(--text-muted); border-color: var(--border-color); }
-.status-success { background: var(--status-green-bg); color: var(--status-green-text); }
+
+/* 🎨 ชุดสี Badge อเนกประสงค์ (รองรับโทนสีตามที่คุณ Kiear กำหนด) */
+.badge-yellow { background: #FEF9C3; color: #854D0E; } /* เหลือง */
+.badge-orange { background: #FFEDD5; color: #C2410C; } /* ส้ม */
+.badge-green  { background: #DCFCE7; color: #166534; } /* เขียว */
+.badge-red    { background: #FEE2E2; color: #991B1B; } /* แดง */
+.badge-blue   { background: #DBEAFE; color: #1E40AF; } /* น้ำเงิน */
+.badge-sky    { background: #E0F2FE; color: #075985; } /* ฟ้า */
+.badge-pink   { background: #FCE7F3; color: #9D174D; } /* ชมพู */
+.badge-gray   { background: #F1F5F9; color: #475569; } /* เทา */
+
+/* 👻 ชุดสี Badge เมื่ออยู่ใน Dark Mode (ปรับให้สีเรืองแสง กลมกลืนกับพื้นหลังมืด) */
+body.is-dark .badge-yellow { background: rgba(234, 179, 8, 0.15); color: #FDE047; }
+body.is-dark .badge-orange { background: rgba(249, 115, 22, 0.15); color: #FDBA74; }
+body.is-dark .badge-green  { background: rgba(34, 197, 94, 0.15); color: #86EFAC; }
+body.is-dark .badge-red    { background: rgba(239, 68, 68, 0.15); color: #FCA5A5; }
+body.is-dark .badge-blue   { background: rgba(59, 130, 246, 0.15); color: #93C5FD; }
+body.is-dark .badge-sky    { background: rgba(14, 165, 233, 0.15); color: #7DD3FC; }
+body.is-dark .badge-pink   { background: rgba(236, 72, 153, 0.15); color: #F9A8D4; }
+body.is-dark .badge-gray   { background: rgba(100, 116, 139, 0.2); color: #CBD5E1; }
 
 /* Dashboard Summary Cards */
 .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
@@ -433,4 +441,341 @@ textarea.seamless-input {
     padding-top: 12px; 
     border-top: 1px dashed var(--border-color);
     gap: 8px;
+}
+
+/* =========================================
+   ✨ UX UPGRADE V10.10: Clickable Tags in Edit Mode
+========================================= */
+/* 1. ล็อกไม่ให้คลิก Tag ได้ในโหมดอ่าน (ป้องกันการเผลอกด) */
+.crm-drawer .skill-tag {
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 2. ปลดล็อกให้คลิกได้ และมีลูกเล่นเวลาเอาเมาส์ชี้ เมื่ออยู่ในโหมดแก้ไข */
+.crm-drawer.is-editing .skill-tag {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* 3. เอฟเฟกต์ยุบตัวนิดๆ เวลากด เพื่อให้รู้ว่ากดติดแล้ว */
+.crm-drawer.is-editing .skill-tag:active {
+    transform: scale(0.92);
+}
+
+/* =========================================
+   🔧 HOTFIX V10.11: ปลดล็อกคลิก Tag และปุ่มลบ
+========================================= */
+/* ปลดล็อกให้คลิก Tag ได้เมื่ออยู่ในโหมดแก้ไข */
+.is-editing .skill-tag {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* ปลดล็อกให้คลิกปุ่ม (X) ลบ Tag ได้ */
+.is-editing .tag-remove {
+    display: inline-flex !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* =========================================
+   ✨ UX UPGRADE V10.13: True Seamless Transitions (สมูท 100%)
+========================================= */
+
+/* 1. เปลี่ยนการซ่อนปุ่ม (X) เป็นการหดขนาดและจางหาย (Morphing) */
+.skill-tag {
+    transition: all 0.3s ease;
+}
+.tag-remove {
+    display: inline-flex !important; /* บังคับโชว์เสมอ แต่ซ่อนด้วยขนาดแทน */
+    max-width: 0;          /* บีบความกว้างให้เหลือ 0 */
+    opacity: 0;            /* ทำให้โปร่งใส */
+    margin-left: 0;
+    transform: scale(0);   /* ย่อส่วนลง */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* แอนิเมชันสปริง */
+}
+.is-editing .tag-remove {
+    max-width: 20px;       /* คืนขนาดเดิม */
+    opacity: 1;
+    margin-left: 4px;
+    transform: scale(1);
+}
+
+/* 2. กล่องพิมพ์เพิ่ม Tag ให้เปลี่ยนเป็นการสไลด์พับเก็บ (Slide Up/Down) */
+.add-tag-group {
+    display: flex !important;
+    max-height: 0;         /* พับความสูงเก็บ */
+    opacity: 0;
+    overflow: hidden;      /* ซ่อนส่วนที่ล้น */
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    border-top: 1px dashed transparent !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.is-editing .add-tag-group {
+    max-height: 60px;      /* กางความสูงออก */
+    opacity: 1;
+    margin-top: 12px !important;
+    padding-top: 12px !important;
+    border-top-color: var(--border-color) !important;
+}
+
+/* 3. ทำให้เส้นประใต้ข้อความค่อยๆ จางหาย ไม่ใช่กระพริบหาย */
+.seamless-input {
+    border-color: transparent !important;
+    transition: all 0.3s ease !important;
+}
+.is-editing .seamless-input {
+    border-bottom: 1px dashed var(--text-light) !important;
+}
+.is-editing .seamless-input:focus {
+    border: 1px solid var(--primary) !important;
+}
+
+/* =========================================
+   ✨ UX UPGRADE V10.15: Scrollable Tag Container
+========================================= */
+/* 1. จำกัดความสูงของกล่อง Tag และเปิดระบบ Scroll */
+.skill-checklist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 140px; /* จำกัดความสูง (โชว์ได้ประมาณ 4-5 บรรทัด) */
+    overflow-y: auto;  /* ถ้าล้น ให้โชว์ Scrollbar แนวตั้ง */
+    align-content: flex-start; /* บังคับให้ Tag เรียงชิดขอบบนเสมอ */
+    padding-right: 6px; /* เว้นที่ว่างด้านขวานิดนึง ไม่ให้ Tag ชน Scrollbar */
+}
+
+/* 2. ดีไซน์ Scrollbar ให้เรียวเล็ก มินิมอล (สไตล์ Mac/iOS) */
+.skill-checklist::-webkit-scrollbar {
+    width: 5px; /* ความกว้างของแกนเลื่อน */
+}
+.skill-checklist::-webkit-scrollbar-track {
+    background: transparent; /* ซ่อนราง Scrollbar */
+}
+.skill-checklist::-webkit-scrollbar-thumb {
+    background: var(--border-color); /* สีของตัวเลื่อน */
+    border-radius: 10px; /* ทำขอบมน */
+}
+.skill-checklist::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted); /* สีเข้มขึ้นตอนเอาเมาส์ไปชี้ */
+}
+
+/* =========================================
+   ✨ UX UPGRADE V10.16: Interactive Lightbulb Hints
+========================================= */
+/* 1. ไอคอนหลอดไฟ */
+.hint-icon {
+    cursor: pointer;
+    font-size: 1.1rem;
+    margin-left: 6px;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
+    filter: grayscale(0.2); /* ดรอปสีลงนิดนึงไม่ให้แย่งซีน */
+}
+.hint-icon:active {
+    transform: scale(0.8) rotate(10deg); /* เด้งดุ๊กดิ๊กตอนกด */
+}
+
+/* 2. กล่องข้อความ (Top Layer) */
+.hint-popup {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px); /* ลอยอยู่ใต้หลอดไฟนิดนึง */
+    left: 0;
+    background: rgba(30, 41, 59, 0.95); /* สีเทาเข้มอมน้ำเงิน ดูพรีเมียม */
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 400;
+    z-index: 99999; /* บังคับอยู่บนสุดของทุกสิ่ง */
+    width: max-content;
+    max-width: 260px; /* กันไม่ให้ล้นจอมือถือ */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    animation: fadeInHint 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none; /* ทะลุการคลิกที่ตัวกล่องไปเลย */
+}
+.hint-popup.show {
+    display: block;
+}
+
+/* 3. ลูกศรจิ๋วชี้ขึ้นไปหาหลอดไฟ */
+.hint-popup::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 30px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent rgba(30, 41, 59, 0.95) transparent;
+}
+
+/* 4. จุดสี */
+.hint-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+.hint-dot.gray { background: #9CA3AF; }
+
+@keyframes fadeInHint {
+    from { opacity: 0; transform: translateY(10px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* =========================================
+   ✨ UX UPGRADE V11.0: Smart Reminders & Clickable Dashboard
+========================================= */
+
+/* 1. สีไฮไลท์ระบบ Smart Reminders (แบบเส้นขอบซ้าย Minimalist) */
+.main-row.row-today td { background-color: var(--bg-surface); }
+.main-row.row-overdue td { background-color: var(--bg-surface); }
+
+/* สร้างเส้นสีหนา 4px ที่ขอบซ้ายของคอลัมน์แรก */
+.main-row.row-today td:first-child { 
+    box-shadow: inset 4px 0 0 0 #22C55E; 
+}
+.main-row.row-overdue td:first-child { 
+    box-shadow: inset 4px 0 0 0 #EF4444; 
+}
+
+/* 2. ทำให้ Dashboard Card กดได้ */
+.summary-card {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+.summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-light);
+}
+.summary-card.active-filter {
+    border-color: var(--primary);
+    background-color: var(--primary-light);
+}
+
+/* 3. ปุ่ม Pagination (เลขหน้า) */
+.pagination-container {
+    display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px; align-items: center;
+}
+.btn-page { padding: 4px 12px; font-weight: 600; }
+
+/* =========================================
+   ✨ UX UPGRADE V11.3: Dual Dark Mode & SPA Views
+========================================= */
+/* 🌟 1. ระบบ SPA View Switching (สลับหน้าเนียนๆ ไม่โหลดใหม่) */
+.app-view { display: none; animation: fadeIn 0.3s ease; }
+.app-view.active-view { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* 🌟 2. ปรับ Theme โปเกมอนให้เด่นชัด */
+body.theme-charmander { --primary: #F97316; --primary-hover: #EA580C; --primary-light: #FFF7ED; --bg-body: #FFF7ED; }
+body.theme-squirtle { --primary: #0EA5E9; --primary-hover: #0284C7; --primary-light: #F0F9FF; --bg-body: #F0F9FF; }
+body.theme-bulbasaur { --primary: #10B981; --primary-hover: #059669; --primary-light: #ECFDF5; --bg-body: #ECFDF5; }
+body.theme-pikachu { --primary: #FACC15; --primary-hover: #EAB308; --primary-light: #FEF9C3; --bg-body: #FFFBEB; }
+
+/* 👻 3. TRUE DARK MODE (Gastly & Mew) */
+body.theme-gastly { 
+    --primary: #A855F7; --primary-hover: #9333EA; --primary-light: rgba(168, 85, 247, 0.15); 
+    --bg-body: #0F172A; --bg-surface: #1E293B; --text-main: #F8FAFC; --text-muted: #94A3B8; --border-color: #334155; 
+}
+body.theme-mew { 
+    --primary: #F472B6; --primary-hover: #DB2777; --primary-light: rgba(244, 114, 182, 0.15); 
+    --bg-body: #281728; --bg-surface: #3E2436; --text-main: #FDF2F8; --text-muted: #FBCFE8; --border-color: #502E46; 
+}
+
+/* ตั้งกฎให้กล่องต่างๆ กลืนไปกับความมืดเมื่อเปิด Dark Mode */
+body.is-dark .data-table th, body.is-dark .modal-header, body.is-dark .modal-footer { background: var(--bg-body); color: var(--text-main); border-color: var(--border-color); }
+body.is-dark .data-table tbody tr.main-row:hover { background: var(--bg-body); }
+body.is-dark .input-search, body.is-dark .e-input, body.is-dark textarea, body.is-dark .seamless-input:focus { background: var(--bg-body); color: var(--text-main); border-color: var(--border-color); }
+body.is-dark .crm-box, body.is-dark .crm-drawer { background: var(--bg-surface); }
+body.is-dark .settings-header { background: var(--bg-surface); border-color: var(--border-color); }
+
+body { transition: background-color 0.5s ease, color 0.3s ease; }
+
+/* ⚙️ 4. ดีไซน์หน้า Settings (Standard Layout) */
+.settings-wrapper { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.settings-card { background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); overflow: hidden; transition: 0.3s; }
+.settings-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); }
+.settings-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+.settings-desc { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+.settings-body { padding: 24px; }
+.settings-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px dashed var(--border-color); }
+.settings-row:last-child { border-bottom: none; padding-bottom: 0; }
+.settings-label { font-weight: 600; color: var(--text-main); }
+.settings-value { color: var(--text-muted); font-size: 0.9rem; }
+
+/* 🔴⚪ 5. Pokéball UI Design */
+.pokeball-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+.theme-option { display: flex; flex-direction: column; align-items: center; gap: 12px; cursor: pointer; }
+.pokeball { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--text-main); position: relative; overflow: hidden; background: #FFFFFF; box-shadow: var(--shadow-md); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; }
+.pokeball::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%; background: var(--ball-color, #EF4444); border-bottom: 4px solid var(--text-main); }
+.pokeball::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 18px; height: 18px; background: #FFFFFF; border: 3px solid var(--text-main); border-radius: 50%; box-shadow: inset 0 0 0 2px #E2E8F0; }
+.theme-option:hover .pokeball { transform: scale(1.15) rotate(15deg); }
+.theme-option.active .pokeball { transform: scale(1.2); box-shadow: 0 0 0 4px var(--primary-light), 0 0 20px var(--primary); }
+.theme-option.active .pokeball::after { background: var(--primary-light); border-color: var(--primary); }
+.theme-option span { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); transition: 0.3s; }
+.theme-option.active span { color: var(--primary); }
+
+/* =========================================
+   🎨 ปุ่มเลือก Theme ด่วน (Quick Theme Dots)
+========================================= */
+.theme-dot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    user-select: none;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.theme-dot:hover {
+    transform: scale(1.25);
+    box-shadow: var(--shadow-md);
+    z-index: 10;
+}
+
+/* =========================================
+   🔴⚪ Small Pokéball for Topbar (V11.6)
+========================================= */
+.pokeball-sm {
+    width: 32px; height: 32px; border-radius: 50%;
+    /* ขอบนอกสีตาม Theme */
+    border: 2px solid var(--text-main); 
+    position: relative; overflow: hidden;
+    background: #FFFFFF; /* ครึ่งล่างสีขาวเสมอ */
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    flex-shrink: 0; /* กันเบียด */
+}
+
+/* ครึ่งบนของ Pokéball จิ๋ว (สีตามธาตุ ดึงค่าจาก JS) */
+.pokeball-sm::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 50%;
+    background: var(--ball-color, #FACC15); /* ค่า Default คือเหลือง Pikachu */
+    border-bottom: 2px solid var(--text-main);
+}
+
+/* ปุ่มวงกลมตรงกลางจิ๋ว */
+.pokeball-sm::after {
+    content: ''; position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 10px; height: 10px; background: #FFFFFF;
+    border: 2px solid var(--text-main); border-radius: 50%;
+    box-shadow: inset 0 0 0 1px #E2E8F0;
+}
+
+/* เอฟเฟกต์ตอน Hover ที่ปุ่มแม่ ทำให้บอลลูกดุ๊กดิ๊ก */
+#btnTopbarTheme:hover .pokeball-sm {
+    transform: scale(1.15) rotate(15deg);
+    box-shadow: var(--shadow-md);
 }
