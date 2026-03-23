@@ -1,206 +1,781 @@
+/* =========================================================================
+   BUZZ GUIDE PLANNER - MODERN CSS ARCHITECTURE (V10.0)
+   - Clean, Modular, and True Mobile-First Responsive
+========================================================================= */
+
 /* =========================================
-   1. THEME VARIABLES (ตั้งค่าสีของแต่ละธีม)
+   1. DESIGN TOKENS & VARIABLES (ตัวแปรสีและขนาด)
 ========================================= */
 :root {
-    --primary-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-    --bg-color: #F3F4F6; --card-bg: #FFFFFF; --text-main: #1F2937; --text-muted: #6B7280;
-    --border-color: #E5E7EB; --th-bg: #F9FAFB; --btn-text: #FFFFFF;
-    --active-bg: #EEF2FF; --active-text: #4F46E5;
-    --danger: #EF4444; --warning: #F59E0B; --success: #10B981; --info: #3B82F6;
-}
-[data-theme="sakura"] {
-    --primary-gradient: linear-gradient(135deg, #F472B6 0%, #DB2777 100%);
-    --bg-color: #FDF2F8; --card-bg: #FFFFFF; --text-main: #831843; --text-muted: #9D174D;
-    --border-color: #FCE7F3; --th-bg: #FCE7F3; --btn-text: #FFFFFF;
-    --active-bg: #FDF2F8; --active-text: #DB2777;
-}
-[data-theme="bee"] {
-    --primary-gradient: linear-gradient(135deg, #FACC15 0%, #EAB308 100%);
-    --bg-color: #FEFCE8; --card-bg: #FFFFFF; --text-main: #111827; --text-muted: #4B5563;
-    --border-color: #FEF08A; --th-bg: #FEF9C3; --btn-text: #111827;
-    --active-bg: #FEF9C3; --active-text: #CA8A04;
-}
-[data-theme="midnight"] {
-    --primary-gradient: linear-gradient(135deg, #3B82F6 0%, #312E81 100%);
-    --bg-color: #111827; --card-bg: #1F2937; --text-main: #F9FAFB; --text-muted: #9CA3AF;
-    --border-color: #374151; --th-bg: #374151; --btn-text: #FFFFFF;
-    --active-bg: #374151; --active-text: #60A5FA;
+    /* 🌟 ลบสี Primary เดิมออก เพราะเราใช้จาก Pokémon Themes แทนแล้ว */
+    --bg-body: #F8FAFC;       
+    --bg-surface: #FFFFFF;    
+    
+    --text-main: #0F172A;     
+    --text-muted: #64748B;    
+    --text-light: #94A3B8;    
+    
+    --border-color: #E2E8F0;  
+    
+    /* Status Colors */
+    --status-green-bg: #DCFCE7; --status-green-text: #166534;
+    --status-yellow-bg: #FEF9C3; --status-yellow-text: #854D0E;
+    --status-red-bg: #FEE2E2; --status-red-text: #991B1B;
+    --status-blue-bg: #DBEAFE; --status-blue-text: #1E40AF;
+    --status-purple-bg: #F3E8FF; --status-purple-text: #6B21A8;
+
+    /* Metrics & Shadows */
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* =========================================
-   2. BASE & LOGIN (พื้นฐานและหน้าล็อกอิน)
+   2. RESET & BASE (ตั้งค่าพื้นฐาน)
 ========================================= */
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; }
-body { background-color: var(--bg-color); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; transition: background-color 0.3s, color 0.3s; }
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Prompt', sans-serif; }
 
-#loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-.login-card { background: var(--card-bg); padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 350px; }
-.login-card input { width: 100%; padding: 0.75rem; margin: 1.5rem 0; font-size: 1.2rem; text-align: center; border: 2px solid var(--border-color); border-radius: 8px; letter-spacing: 5px; background: var(--bg-color); color: var(--text-main);}
-
-/* =========================================
-   3. LAYOUT & NAVBAR (โครงสร้างและเมนูบน)
-========================================= */
-#appContent { display: none; height: 100%; flex-direction: column; }
-.navbar { background: var(--card-bg); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 90; flex-shrink: 0;}
-.navbar h2 { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.nav-links button { background: none; border: none; padding: 0.5rem 1rem; margin-left: 0.5rem; cursor: pointer; border-radius: 8px; color: var(--text-muted); font-weight: 500; }
-.nav-links button.active { background: var(--active-bg); color: var(--active-text); }
-.theme-selector { padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-family: inherit; font-size: 0.85rem; cursor: pointer; outline: none; margin-left: 1rem; }
-
-.container { max-width: 1400px; margin: 1.5rem auto; padding: 0 1.5rem; flex-grow: 1; display: flex; flex-direction: column; width: 100%; height: calc(100vh - 100px); }
-.section { display: none; height: 100%; flex-direction: column; }
-.section.active { display: flex; animation: fadeIn 0.3s; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.card { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-.contacts-card { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; margin-bottom: 0; }
-
-.filter-bar { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; background: var(--th-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); flex-shrink: 0; }
-.filter-bar input, .filter-bar select { padding: 0.5rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit; font-size: 0.9rem; min-width: 200px; background: var(--card-bg); color: var(--text-main); }
-
-/* =========================================
-   4. BUTTONS & COLOR BADGES (ปุ่มและสีป้ายสถานะ)
-========================================= */
-.btn-main { background: var(--primary-gradient); color: var(--btn-text); padding: 0.6rem 1.2rem; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 500;}
-.btn-outline { background: transparent; color: var(--active-text); border: 1px solid var(--active-text); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem;}
-.btn-success { background: var(--success); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem;}
-.btn-warning { background: #FEF3C7; color: var(--warning); border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem;}
-.btn-danger { background: #FEE2E2; color: var(--danger); border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem;}
-.btn-info { background: #DBEAFE; color: var(--info); border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500;}
-
-/* Dropdown สไตล์ตัวอักษรสี (ไม่เน้นพื้นหลังทึบ) */
-.colored-select { 
-    font-weight: 600; border-radius: 6px; padding: 0.2rem 0.4rem; 
-    border: 1px solid transparent; background-color: transparent; 
-    appearance: none; -webkit-appearance: none; -moz-appearance: none;
-    text-align: left; cursor: pointer; font-size: 0.85rem;
-    display: inline-block; width: 100%; transition: all 0.2s ease;
+/* 🌟 ยุบรวม Transition พื้นหลังมาไว้ที่นี่ที่เดียว */
+body { 
+    background-color: var(--bg-body); 
+    color: var(--text-main); 
+    font-size: 14px; 
+    -webkit-font-smoothing: antialiased; 
+    transition: background-color 0.5s ease; /* เพิ่มบรรทัดนี้เข้ามา */
 }
-.colored-select:focus { outline: none; border-color: var(--border-color); background-color: var(--card-bg); }
-.colored-select option { background-color: var(--card-bg) !important; color: var(--text-main) !important; font-weight: normal; }
 
-/* สีตัวอักษรของหมวดหมู่ */
-.type-jogger { color: var(--active-text) !important; }
-.type-sponsor { color: #166534 !important; }
-.type-customer { color: #CA8A04 !important; }
-.type-abo { color: #DC2626 !important; }
-.type-mem { color: #2563EB !important; }
-
-.status-list { color: var(--active-text) !important; }
-.status-contacting { color: #1D4ED8 !important; }
-.status-appointed { color: #D97706 !important; }
-.status-presented { color: #9333EA !important; }
-.status-followup { color: #0891B2 !important; }
-.status-success { color: #15803D !important; }
-.status-rejected { color: #B91C1C !important; }
+a { text-decoration: none; color: inherit; }
+button, input, select, textarea { font-family: inherit; outline: none; }
 
 /* =========================================
-   5. TABLES & DRAWER (ตารางรายชื่อและลิ้นชักขยาย)
+   3. APP LAYOUT (โครงสร้างหน้าจอหลัก)
 ========================================= */
-.table-container { flex-grow: 1; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; }
-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
-th, td { padding: 0.6rem 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-th { color: var(--text-muted); font-weight: 500; background-color: var(--th-bg); position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--border-color); }
+.app-layout { display: flex; height: 100vh; overflow: hidden; width: 100vw; }
 
-.col-id { width: 80px; font-family: 'Courier New', Courier, monospace; color: var(--text-muted); text-align: center; }
-.col-name { width: 220px; }
-.col-age { width: 60px; text-align: center; }
-.col-type { width: 140px; }
-.col-rel { width: 130px; }
-.col-score { width: 110px; text-align: center; cursor: help; }
-.col-status { width: 150px; }
-.col-update { width: 130px; text-align: center; }
-.col-action { width: 80px; text-align: center; }
+/* Sidebar */
+.sidebar { width: 260px; background: var(--bg-surface); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; z-index: 100; transition: transform 0.3s ease; flex-shrink: 0; }
+.sidebar-brand { height: 70px; display: flex; align-items: center; padding: 0 24px; font-size: 1.25rem; font-weight: 700; color: var(--primary); border-bottom: 1px solid var(--border-color); }
+.sidebar-nav { padding: 20px 12px; flex: 1; overflow-y: auto; }
+.nav-section { font-size: 0.75rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px 12px; }
+.nav-item { display: flex; align-items: center; padding: 10px 16px; margin-bottom: 4px; border-radius: var(--radius-md); color: var(--text-muted); font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.nav-item:hover, .nav-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
 
-.inline-input { width: 100%; padding: 0.3rem 0.5rem; border: 1px solid transparent; border-radius: 4px; background: transparent; font-family: inherit; font-size: 0.85rem; color: var(--text-main); transition: all 0.2s; }
-.inline-input:hover, .inline-input:focus { border: 1px solid var(--border-color); background: var(--card-bg); outline: none; }
-select.inline-input { cursor: pointer; padding-right: 0; }
+/* Main Content */
+.main-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
 
-.main-row { cursor: pointer; transition: background-color 0.2s; }
-.main-row:hover { background-color: rgba(0, 0, 0, 0.02); }
-.main-row.row-expanded { background-color: var(--active-bg); }
-.name-text { font-weight: 500; color: var(--active-text); padding: 0.2rem; cursor: pointer; transition: transform 0.2s; display: inline-block; }
-.name-text:hover { transform: translateX(5px); }
-.row-expanded .name-text { color: var(--text-main); font-weight: 600; transform: none; }
-.last-update-text { font-size: 0.7rem; color: var(--text-muted); }
+/* Topbar */
+.topbar { height: 70px; background: var(--bg-surface); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; z-index: 40; flex-shrink: 0; }
+.topbar-title { font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
+.topbar-actions { display: flex; align-items: center; gap: 16px; }
+.mobile-menu-btn { display: none; background: transparent; border: 1px solid var(--border-color); font-size: 1.2rem; color: var(--text-main); cursor: pointer; width: 40px; height: 40px; border-radius: var(--radius-md); align-items: center; justify-content: center; }
 
-/* ลิ้นชักขยาย */
+/* Content Area */
+.content-area { flex: 1; overflow-y: auto; padding: 32px; scroll-behavior: smooth; }
+.content-max-width { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+
+/* =========================================
+   4. UI COMPONENTS (ปุ่ม, ฟอร์ม, Dashboard)
+========================================= */
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 16px; border-radius: var(--radius-md); font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-hover); box-shadow: var(--shadow-md); }
+.btn-outline { background: var(--bg-surface); border-color: var(--border-color); color: var(--text-main); }
+.btn-outline:hover { background: var(--bg-body); border-color: var(--text-muted); }
+.btn-danger { background: var(--status-red-bg); color: var(--status-red-text); border-color: #FCA5A5; }
+.btn-icon-dots { background: transparent; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: var(--radius-md); transition: 0.2s; }
+.btn-icon-dots:hover { background: var(--bg-body); color: var(--primary); }
+
+/* Inputs & Forms */
+.input-group { position: relative; display: flex; align-items: center; }
+.input-search { padding: 10px 16px 10px 40px; border-radius: 9999px; border: 1px solid var(--border-color); width: 300px; background: var(--bg-surface); transition: all 0.2s; color: var(--text-main); }
+.input-search:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); width: 340px; }
+.search-icon { position: absolute; left: 14px; color: var(--text-muted); pointer-events: none; }
+
+.e-group { display: flex; flex-direction: column; margin-bottom: 16px; }
+.e-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+.e-input { padding: 10px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-surface); color: var(--text-main); font-size: 0.9rem; transition: 0.2s; }
+.e-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+
+/* Avatar & Badges */
+.avatar-circle { width: 38px; height: 38px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0; text-transform: uppercase; border: 1px solid rgba(79, 70, 229, 0.1); }
+.colored-select { width: fit-content; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; text-align: center; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; }
+.colored-select option { background: var(--bg-surface); color: var(--text-main); }
+
+/* 🎨 ชุดสี Badge อเนกประสงค์ (รองรับโทนสีตามที่คุณ Kiear กำหนด) */
+.badge-yellow { background: #FEF9C3; color: #854D0E; } /* เหลือง */
+.badge-orange { background: #FFEDD5; color: #C2410C; } /* ส้ม */
+.badge-green  { background: #DCFCE7; color: #166534; } /* เขียว */
+.badge-red    { background: #FEE2E2; color: #991B1B; } /* แดง */
+.badge-blue   { background: #DBEAFE; color: #1E40AF; } /* น้ำเงิน */
+.badge-sky    { background: #E0F2FE; color: #075985; } /* ฟ้า */
+.badge-pink   { background: #FCE7F3; color: #9D174D; } /* ชมพู */
+.badge-gray   { background: #F1F5F9; color: #475569; } /* เทา */
+
+/* 👻 ชุดสี Badge เมื่ออยู่ใน Dark Mode (ปรับให้สีเรืองแสง กลมกลืนกับพื้นหลังมืด) */
+body.is-dark .badge-yellow { background: rgba(234, 179, 8, 0.15); color: #FDE047; }
+body.is-dark .badge-orange { background: rgba(249, 115, 22, 0.15); color: #FDBA74; }
+body.is-dark .badge-green  { background: rgba(34, 197, 94, 0.15); color: #86EFAC; }
+body.is-dark .badge-red    { background: rgba(239, 68, 68, 0.15); color: #FCA5A5; }
+body.is-dark .badge-blue   { background: rgba(59, 130, 246, 0.15); color: #93C5FD; }
+body.is-dark .badge-sky    { background: rgba(14, 165, 233, 0.15); color: #7DD3FC; }
+body.is-dark .badge-pink   { background: rgba(236, 72, 153, 0.15); color: #F9A8D4; }
+body.is-dark .badge-gray   { background: rgba(100, 116, 139, 0.2); color: #CBD5E1; }
+
+/* Dashboard Summary Cards */
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.summary-card { background: var(--bg-surface); padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 8px; }
+.summary-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.summary-value { font-size: 2rem; font-weight: 700; color: var(--primary); line-height: 1; }
+
+/* =========================================
+   5. POPOVERS & MENUS (หน้าต่างลอยตัว)
+========================================= */
+.filter-popover { position: fixed; background: var(--bg-surface); border: 1px solid var(--border-color); box-shadow: var(--shadow-lg); border-radius: var(--radius-lg); padding: 16px; z-index: 9999; display: none; flex-direction: column; gap: 8px; min-width: 180px; }
+.filter-popover label { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px 12px; border-radius: var(--radius-md); font-size: 0.85rem; transition: 0.2s; }
+.filter-popover label:hover { background: var(--bg-body); color: var(--primary); font-weight: 500; }
+
+.action-menu-dropdown { position: absolute; right: 0; top: 100%; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 100; display: none; flex-direction: column; overflow: hidden; min-width: 150px; margin-top: 8px; }
+.action-menu-dropdown.show { display: flex; }
+.action-menu-dropdown button { padding: 12px 16px; background: transparent; border: none; text-align: left; cursor: pointer; font-size: 0.85rem; color: var(--text-main); font-weight: 500; transition: 0.2s; }
+.action-menu-dropdown button:hover { background: var(--bg-body); color: var(--primary); }
+.delete-confirm-box { position: absolute; right: 15px; top: 15px; background: var(--bg-surface); padding: 12px 16px; border-radius: var(--radius-lg); border: 1px solid var(--status-red-bg); z-index: 100; display: flex; gap: 10px; align-items: center; box-shadow: var(--shadow-lg); }
+
+/* =========================================
+   6. DATA TABLE (ตารางสำหรับ PC)
+========================================= */
+.table-card { background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; overflow: hidden; }
+.table-responsive { overflow-x: auto; width: 100%; }
+.data-table { width: 100%; border-collapse: collapse; text-align: left; }
+
+/* Header ทันสมัย ล็อกอยู่กับที่ */
+.data-table th { background: #F8FAFC; color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 16px 20px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 20; white-space: nowrap; }
+.th-interactive { cursor: pointer; transition: 0.2s; }
+.th-interactive:hover { background: #F1F5F9; color: var(--primary); }
+.th-header-flex { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.filter-icon { font-size: 0.65rem; opacity: 0.4; }
+.th-interactive:hover .filter-icon { opacity: 1; }
+
+/* Table Body */
+.data-table td { padding: 16px 20px; border-bottom: 1px solid var(--border-color); vertical-align: middle; font-size: 0.875rem; white-space: nowrap; }
+.data-table td.col-name-cell { white-space: normal; min-width: 250px; }
+.data-table tbody tr.main-row { transition: background 0.2s ease; cursor: pointer; background: var(--bg-surface); }
+.data-table tbody tr.main-row:hover { background: #F8FAFC; }
+.data-table tbody tr.main-row.row-expanded td { background: var(--primary-light); border-bottom: none; }
+
+.pagination-footer { padding: 16px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); }
+.page-info { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+
+/* =========================================
+   7. DRAWER & INLINE EDIT (ลิ้นชักและโหมดแก้ไข)
+========================================= */
 .expanded-row { display: none; }
 .expanded-row.open { display: table-row; }
-.expanded-content { background: var(--th-bg); padding: 1.5rem; border-radius: 0 0 8px 8px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); border-bottom: 2px solid var(--border-color); white-space: normal; }
+.crm-drawer { background: var(--bg-surface); padding: 0 24px 24px 24px; border-bottom: 2px solid var(--primary); position: relative; }
+.drawer-header-actions { padding: 16px 0; display: flex; justify-content: space-between; align-items: center; }
 
-.drawer-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1rem;}
-.drawer-left { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-content: start;}
-.drawer-right { display: flex; flex-direction: column; gap: 0.5rem; }
-.dl-full { grid-column: span 2; } 
+.crm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.crm-box { background: var(--bg-body); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; display: flex; flex-direction: column; }
+.crm-section-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.crm-box.full-width { grid-column: 1 / -1; }
 
-.e-group { display: flex; flex-direction: column; gap: 0.3rem; }
-.e-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; letter-spacing: 0.5px;}
-.e-input { padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 0.85rem; background: var(--card-bg); color: var(--text-main);}
-textarea.e-input { resize: vertical; min-height: 60px; }
-.e-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px dashed var(--border-color); }
+.readonly-text { font-size: 0.875rem; margin-bottom: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-color); padding-bottom: 8px; }
+.readonly-label { color: var(--text-muted); }
+.readonly-value { font-weight: 600; color: var(--text-main); text-align: right; }
 
-/* UI เกม RPG สำหรับเลือกดาว */
-.rpg-stat-group { display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); padding: 0.4rem 0.8rem; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
-.rpg-stat-label { font-size: 0.8rem; font-weight: 600; color: var(--text-main); font-family: 'Courier New', Courier, monospace; }
-.rpg-star-select { background: transparent; border: none; outline: none; cursor: pointer; letter-spacing: 1px; font-size: 0.9rem; color: #F59E0B; }
-.rpg-star-select option { color: var(--text-main); background: var(--card-bg); }
-.info-hint { display: inline-block; margin-left: 5px; color: var(--active-text); cursor: help; font-size: 0.9rem; }
+/* ระบบสลับโหมด (Toggle Edit) */
+.edit-mode { display: none; }
+.view-mode { display: block; }
+.is-editing .edit-mode { display: block; }
+.is-editing .view-mode { display: none; }
+.is-editing .btn-icon-dots { display: none !important; }
 
-/* =========================================
-   6. UI EFFECTS (Hover Cards, เช็คลิสต์ 3 สถานะ, Auto-save)
-========================================= */
-.score-hover-target { display: inline-block; cursor: help; padding: 0.2rem 0.5rem; border-radius: 6px; transition: background-color 0.2s;}
-.score-hover-target:hover { background-color: var(--active-bg); }
+/* เปลี่ยนสี Drawer เมื่อกำลังแก้ไข */
+.is-editing .crm-drawer { background: #F8FAFC; border: 2px dashed var(--primary); border-top: none; }
+.is-editing .crm-box { background: var(--bg-surface); box-shadow: var(--shadow-sm); }
+.is-editing .followup-box { background: #FEF3C7 !important; border-color: #FDE047 !important; }
 
-.stats-hover-card { display: none; position: fixed; background: var(--card-bg); border-radius: 10px; box-shadow: 0 15px 30px -5px rgba(0,0,0,0.15), 0 0 0 1px var(--border-color); width: 220px; z-index: 2000; padding: 1rem; pointer-events: none; color: var(--text-main); }
-.sh-header { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.8rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.4rem; letter-spacing: 0.5px;}
-.sh-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.8rem; }
-.sh-label { font-weight: 600; font-family: 'Courier New', Courier, monospace; color: var(--text-main); }
-.sh-stars { letter-spacing: 2px; font-size: 0.85rem; }
-
-/* ป้ายแสดงสถานะการบันทึก (Auto-Save) */
-.save-status-indicator { font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; justify-content: center; min-width: 60px; height: 28px; transition: all 0.3s; }
-.status-idle { color: var(--text-muted); opacity: 0.3; } 
-.status-saving { color: var(--warning); animation: pulse 1s infinite; }
-.status-success { color: var(--success); }
-.status-error { color: var(--danger); }
-@keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-
-/* เช็คลิสต์ 3 สถานะ */
-.d-checklist { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; background: var(--card-bg); padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 0.5rem;}
-.product-toggle-btn { border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-muted); border-radius: 6px; padding: 0.4rem 0.5rem; font-size: 0.75rem; font-weight: 500; font-family: inherit; cursor: pointer; text-align: left; transition: all 0.2s; display: flex; align-items: center; gap: 6px; user-select: none; }
-.product-toggle-btn::before { content: ''; display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: var(--border-color); transition: all 0.2s; flex-shrink: 0; }
-.product-toggle-btn.status-interested { background: #FEF9C3; border-color: #FACC15; color: #854D0E; }
-.product-toggle-btn.status-interested::before { background-color: #FACC15; box-shadow: 0 0 0 2px #FEF9C3, 0 0 0 3px #FACC15; }
-.product-toggle-btn.status-used { background: #DCFCE7; border-color: #22C55E; color: #14532D; }
-.product-toggle-btn.status-used::before { background-color: #22C55E; box-shadow: 0 0 0 2px #DCFCE7, 0 0 0 3px #22C55E; }
-
-/* กล่อง Hover สินค้า */
-.checklist-hover-card { display: none; position: fixed; background: var(--card-bg); border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 0 0 1px var(--border-color); width: 200px; z-index: 2000; padding: 0.8rem; pointer-events: none; color: var(--text-main); }
-.ch-header { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.3rem;}
-.ch-item { font-size: 0.75rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 5px; }
-.ch-item.used::before { content: '✅'; font-size: 0.7rem; }
-.ch-item.interested::before { content: '🟡'; font-size: 0.7rem; }
-.ch-empty { font-size: 0.75rem; color: var(--text-muted); font-style: italic; }
+.skill-checklist { display: flex; flex-wrap: wrap; gap: 8px; }
+.skill-tag { border: 1px solid var(--border-color); border-radius: 50px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s; background: var(--bg-surface); color: var(--text-muted); }
+.skill-tag.status-yes { background: var(--status-yellow-bg); color: var(--status-yellow-text); border-color: #FACC15; }
+.skill-tag.status-teach { background: var(--status-green-bg); color: var(--status-green-text); border-color: #4ADE80; }
 
 /* =========================================
-   7. GOALS PREMIUM STYLE (หน้าเป้าหมายความสำเร็จ)
+   8. MODALS (หน้าต่างเพิ่มรายชื่อ)
 ========================================= */
-.goal-header-banner { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: #f1f5f9; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; text-align: center; border-left: 5px solid #f39c12; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-.goal-quote { font-style: italic; font-size: 1.1rem; color: #e2e8f0; margin-top: 0.5rem; font-weight: 300; }
-.goal-section-title { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 600; margin-bottom: 1.2rem; color: var(--text-main); }
-.goal-section-title i { color: #f39c12; }
-.life-goal-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; transition: all 0.3s ease; }
-.life-goal-card:hover { border-color: #f39c12; box-shadow: 0 4px 20px rgba(243, 156, 18, 0.1); }
-.gold-badge { background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 3000; opacity: 0; transition: opacity 0.3s ease; padding: 20px; }
+.modal-overlay.open { opacity: 1; display: flex; }
+
+.modal-content { background: var(--bg-surface); border-radius: var(--radius-xl); width: 100%; max-width: 480px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); overflow: hidden; }
+.modal-overlay.open .modal-content { transform: scale(1); }
+
+.modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; }
+.modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px; background: #F8FAFC; }
 
 /* =========================================
-   8. MODALS (ป๊อปอัพเพิ่มข้อมูลทีละเยอะๆ)
+   9. โค้ดจัด 4 คอลัมน์ของ PC
 ========================================= */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 3000; }
-.modal-content { background: var(--card-bg); padding: 2rem; border-radius: 16px; width: 100%; max-width: 1050px; max-height: 90vh; overflow-y: auto; color: var(--text-main); }
-.bulk-table th, .bulk-table td { padding: 0.5rem; }
-.bulk-table input, .bulk-table select { width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; background: var(--card-bg); color: var(--text-main); }
-.loader { text-align: center; padding: 2rem; color: var(--text-muted); }
-.toolbar-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+@media (max-width: 1024px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* =========================================
+   🔧 HOTFIX V10.1: Table Column Alignment
+========================================= */
+/* บังคับให้คลาส desktop-only แสดงผลเป็นช่องตารางที่ถูกต้องบน PC */
+#contactsTable th.desktop-only, 
+#contactsTable td.desktop-only {
+    display: table-cell !important;
+    vertical-align: middle;
+}
+
+/* ซ่อนคอลัมน์นี้เมื่อเป็นหน้าจอมือถือ */
+@media (max-width: 768px) {
+    #contactsTable th.desktop-only, 
+    #contactsTable td.desktop-only {
+        display: none !important;
+    }
+}
+
+/* =========================================
+   ✨ UX UPGRADE: Desktop Custom 4-Columns Grid (7 Cards)
+========================================= */
+/* เฉพาะบนหน้าจอคอมพิวเตอร์ (กว้างกว่า 1024px) */
+@media (min-width: 1025px) {
+    .crm-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        grid-auto-rows: min-content;
+        gap: 16px !important;
+        align-items: stretch !important;
+    }
+    
+    /* ยกเลิกการกินพื้นที่เต็มบรรทัดของของเก่า */
+    .crm-box.full-width { grid-column: auto !important; }
+
+    /* บังคับตำแหน่งการ์ดทั้ง 7 ให้ลงล็อกตาม Diagram */
+    .box-info { grid-column: 1; grid-row: 1; }
+    .box-system { grid-column: 1; grid-row: 2; }
+    
+    .box-product { grid-column: 2; grid-row: 1; }
+    .box-skill { grid-column: 2; grid-row: 2; }
+    
+    .box-followup { grid-column: 3; grid-row: 1; }
+    .box-farm { grid-column: 3; grid-row: 2; }
+    
+    /* การ์ดที่ 7 (Note) กินพื้นที่คอลัมน์ขวาสุด ควบ 2 บรรทัดแนวตั้ง */
+    .box-note { 
+        grid-column: 4 !important; 
+        grid-row: 1 / span 2 !important; 
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* บังคับให้ช่องพิมพ์ยาวเต็มกรอบการ์ดพอดี */
+    .box-note .view-mode, .box-note .edit-mode { flex: 1; display: flex; flex-direction: column; }
+    .box-note textarea.ex-note { flex: 1; min-height: 100% !important; resize: none; margin-bottom: 0; }
+}
+
+/* สำหรับจอ Tablet (769px - 1024px) ให้เป็น 2 คอลัมน์แทน ป้องกันการบีบจนเละ */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .crm-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .box-note { grid-column: 1 / span 2 !important; }
+}
+
+/* =========================================
+   🔧 HOTFIX V10.3: แก้บั๊กกล่อง Note โชว์ซ้อนกัน
+========================================= */
+@media (min-width: 1025px) {
+    /* จัดให้โครงสร้างยืดเต็มกล่อง แต่ยังไม่สั่งโชว์ */
+    .box-note .view-mode, .box-note .edit-mode { 
+        flex: 1; 
+        flex-direction: column; 
+    }
+    
+    /* 1. โหมดปกติ (ดูข้อมูล): ให้โชว์แค่ข้อความ และซ่อนกล่องพิมพ์ */
+    .box-note .view-mode { display: flex !important; }
+    .box-note .edit-mode { display: none !important; }
+    
+    /* 2. โหมดแก้ไข (กดปุ่ม ✏️): ให้ซ่อนข้อความ และโชว์กล่องพิมพ์แทน */
+    .is-editing .box-note .view-mode { display: none !important; }
+    .is-editing .box-note .edit-mode { display: flex !important; }
+}
+
+/* =========================================
+   ✨ UX UPGRADE V10.4: Smooth Drawer & Seamless Edit
+========================================= */
+
+/* 1. Animation ให้ Drawer เลื่อนสไลด์ลงมา (Slide Down) */
+.drawer-container {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, padding 0.3s ease;
+}
+.drawer-container.drawer-expand {
+    max-height: 800px; /* ความสูงเผื่อไว้สำหรับ PC */
+    opacity: 1;
+    padding-top: 24px !important;
+    padding-bottom: 24px !important;
+}
+
+/* 2. ดีไซน์ Seamless Input (หน้าตาเหมือนข้อความเป๊ะ แต่พิมพ์ได้) */
+.seamless-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed var(--border-color);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+.seamless-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.seamless-label { color: var(--text-muted); font-size: 0.875rem; flex-shrink: 0; }
+
+.seamless-input {
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-main);
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-align: right;
+    width: 65%; /* ให้พื้นที่กล่องพิมพ์ยาวหน่อย */
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    pointer-events: none; /* ล็อกไว้ไม่ให้คลิกตอนอยู่โหมดอ่าน */
+    appearance: none; /* ซ่อนลูกศร Dropdown */
+}
+
+/* 3. เมื่อเปิด "โหมดแก้ไข" (ปลดล็อกให้คลิกพิมพ์ได้ พร้อมเส้นประบางๆ) */
+.is-editing .seamless-input {
+    pointer-events: auto;
+    border-bottom: 1px dashed var(--text-light); /* เส้นประใบ้ว่าพิมพ์ได้ */
+    cursor: text;
+}
+.is-editing select.seamless-input { cursor: pointer; appearance: auto; } /* คืนค่าลูกศรให้ Dropdown */
+.is-editing .seamless-input:hover { background: var(--bg-body); }
+.is-editing .seamless-input:focus {
+    background: var(--bg-surface);
+    border: 1px solid var(--primary);
+    text-align: left; /* พิมพ์ง่ายขึ้นเวลาโฟกัส */
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* 4. กล่อง Story/Note แบบ Seamless */
+textarea.seamless-input {
+    width: 100%; text-align: left; resize: none; line-height: 1.6; font-weight: 400; padding: 0;
+}
+.is-editing textarea.seamless-input {
+    padding: 12px; border: 1px dashed var(--border-color); background: var(--bg-surface); resize: vertical;
+}
+
+/* 5. ล็อกปุ่ม Tag สินค้า/ทักษะ ให้กดได้เฉพาะโหมดแก้ไข */
+.crm-drawer .skill-checklist button { pointer-events: none; }
+.crm-drawer.is-editing .skill-checklist button { pointer-events: auto; cursor: pointer; }
+
+/* =========================================
+   ✨ UX UPGRADE V10.6: Bouncy Spring & Glow Buttons
+========================================= */
+/* 1. เปลี่ยนเส้นโค้งเวลาของปุ่มให้เป็น "สปริงเด้งดึ๋ง" (Overshoot Curve) */
+.btn {
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    transform-origin: center;
+}
+
+/* 2. สร้างเอฟเฟกต์เรืองแสงคลื่นๆ (Pulse) ดึงดูดสายตาให้ปุ่มบันทึก */
+@keyframes glow-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.5); }
+    70% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+/* คลาสพิเศษที่จะใส่ให้เฉพาะปุ่มบันทึก */
+.btn-save-glow {
+    animation: glow-pulse 1.5s infinite !important;
+    border: none !important;
+}
+
+/* =========================================
+   ✨ UX UPGRADE V10.9: Editable Tags & Custom Input
+========================================= */
+/* 1. จัดทรงปุ่ม Tag ให้มีที่ว่างสำหรับปุ่ม (X) */
+.skill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding-right: 8px !important;
+}
+
+/* 2. ดีไซน์ปุ่ม (X) ปิด/ลบ Tag */
+.tag-remove {
+    display: none; /* ซ่อนตอนอยู่ในโหมดอ่าน */
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.08);
+    color: var(--text-main);
+    font-size: 0.6rem;
+    transition: 0.2s;
+}
+.tag-remove:hover {
+    background: var(--status-red-bg);
+    color: var(--status-red-text);
+}
+
+/* 3. กล่องเพิ่ม Tag สินค้า/ทักษะใหม่ (ซ่อนในโหมดอ่าน) */
+.add-tag-group { display: none; }
+
+/* 4. เมื่อเข้าโหมดแก้ไข ให้โชว์ปุ่ม X และกล่องเพิ่ม Tag */
+.is-editing .tag-remove { display: inline-flex; }
+.is-editing .add-tag-group { 
+    display: flex; 
+    margin-top: 12px; 
+    padding-top: 12px; 
+    border-top: 1px dashed var(--border-color);
+    gap: 8px;
+}
+
+/* =========================================
+   ✨ UX UPGRADE V10.10: Clickable Tags in Edit Mode
+========================================= */
+/* 1. ล็อกไม่ให้คลิก Tag ได้ในโหมดอ่าน (ป้องกันการเผลอกด) */
+.crm-drawer .skill-tag {
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 2. ปลดล็อกให้คลิกได้ และมีลูกเล่นเวลาเอาเมาส์ชี้ เมื่ออยู่ในโหมดแก้ไข */
+.crm-drawer.is-editing .skill-tag {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* 3. เอฟเฟกต์ยุบตัวนิดๆ เวลากด เพื่อให้รู้ว่ากดติดแล้ว */
+.crm-drawer.is-editing .skill-tag:active {
+    transform: scale(0.92);
+}
+
+/* =========================================
+   🔧 HOTFIX V10.11: ปลดล็อกคลิก Tag และปุ่มลบ
+========================================= */
+/* ปลดล็อกให้คลิก Tag ได้เมื่ออยู่ในโหมดแก้ไข */
+.is-editing .skill-tag {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* ปลดล็อกให้คลิกปุ่ม (X) ลบ Tag ได้ */
+.is-editing .tag-remove {
+    display: inline-flex !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* =========================================
+   ✨ UX UPGRADE V10.13: True Seamless Transitions (สมูท 100%)
+========================================= */
+
+/* 1. เปลี่ยนการซ่อนปุ่ม (X) เป็นการหดขนาดและจางหาย (Morphing) */
+.skill-tag {
+    transition: all 0.3s ease;
+}
+.tag-remove {
+    display: inline-flex !important; /* บังคับโชว์เสมอ แต่ซ่อนด้วยขนาดแทน */
+    max-width: 0;          /* บีบความกว้างให้เหลือ 0 */
+    opacity: 0;            /* ทำให้โปร่งใส */
+    margin-left: 0;
+    transform: scale(0);   /* ย่อส่วนลง */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* แอนิเมชันสปริง */
+}
+.is-editing .tag-remove {
+    max-width: 20px;       /* คืนขนาดเดิม */
+    opacity: 1;
+    margin-left: 4px;
+    transform: scale(1);
+}
+
+/* 2. กล่องพิมพ์เพิ่ม Tag ให้เปลี่ยนเป็นการสไลด์พับเก็บ (Slide Up/Down) */
+.add-tag-group {
+    display: flex !important;
+    max-height: 0;         /* พับความสูงเก็บ */
+    opacity: 0;
+    overflow: hidden;      /* ซ่อนส่วนที่ล้น */
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    border-top: 1px dashed transparent !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.is-editing .add-tag-group {
+    max-height: 60px;      /* กางความสูงออก */
+    opacity: 1;
+    margin-top: 12px !important;
+    padding-top: 12px !important;
+    border-top-color: var(--border-color) !important;
+}
+
+/* 3. ทำให้เส้นประใต้ข้อความค่อยๆ จางหาย ไม่ใช่กระพริบหาย */
+.seamless-input {
+    border-color: transparent !important;
+    transition: all 0.3s ease !important;
+}
+.is-editing .seamless-input {
+    border-bottom: 1px dashed var(--text-light) !important;
+}
+.is-editing .seamless-input:focus {
+    border: 1px solid var(--primary) !important;
+}
+
+/* =========================================
+   ✨ UX UPGRADE V10.15: Scrollable Tag Container
+========================================= */
+/* 1. จำกัดความสูงของกล่อง Tag และเปิดระบบ Scroll */
+.skill-checklist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 140px; /* จำกัดความสูง (โชว์ได้ประมาณ 4-5 บรรทัด) */
+    overflow-y: auto;  /* ถ้าล้น ให้โชว์ Scrollbar แนวตั้ง */
+    align-content: flex-start; /* บังคับให้ Tag เรียงชิดขอบบนเสมอ */
+    padding-right: 6px; /* เว้นที่ว่างด้านขวานิดนึง ไม่ให้ Tag ชน Scrollbar */
+}
+
+/* 2. ดีไซน์ Scrollbar ให้เรียวเล็ก มินิมอล (สไตล์ Mac/iOS) */
+.skill-checklist::-webkit-scrollbar {
+    width: 5px; /* ความกว้างของแกนเลื่อน */
+}
+.skill-checklist::-webkit-scrollbar-track {
+    background: transparent; /* ซ่อนราง Scrollbar */
+}
+.skill-checklist::-webkit-scrollbar-thumb {
+    background: var(--border-color); /* สีของตัวเลื่อน */
+    border-radius: 10px; /* ทำขอบมน */
+}
+.skill-checklist::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted); /* สีเข้มขึ้นตอนเอาเมาส์ไปชี้ */
+}
+
+/* =========================================
+   ✨ UX UPGRADE V10.16: Interactive Lightbulb Hints
+========================================= */
+/* 1. ไอคอนหลอดไฟ */
+.hint-icon {
+    cursor: pointer;
+    font-size: 1.1rem;
+    margin-left: 6px;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
+    filter: grayscale(0.2); /* ดรอปสีลงนิดนึงไม่ให้แย่งซีน */
+}
+.hint-icon:active {
+    transform: scale(0.8) rotate(10deg); /* เด้งดุ๊กดิ๊กตอนกด */
+}
+
+/* 2. กล่องข้อความ (Top Layer) */
+.hint-popup {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px); /* ลอยอยู่ใต้หลอดไฟนิดนึง */
+    left: 0;
+    background: rgba(30, 41, 59, 0.95); /* สีเทาเข้มอมน้ำเงิน ดูพรีเมียม */
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 400;
+    z-index: 99999; /* บังคับอยู่บนสุดของทุกสิ่ง */
+    width: max-content;
+    max-width: 260px; /* กันไม่ให้ล้นจอมือถือ */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    animation: fadeInHint 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none; /* ทะลุการคลิกที่ตัวกล่องไปเลย */
+}
+.hint-popup.show {
+    display: block;
+}
+
+/* 3. ลูกศรจิ๋วชี้ขึ้นไปหาหลอดไฟ */
+.hint-popup::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 30px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent rgba(30, 41, 59, 0.95) transparent;
+}
+
+/* 4. จุดสี */
+.hint-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+.hint-dot.gray { background: #9CA3AF; }
+
+@keyframes fadeInHint {
+    from { opacity: 0; transform: translateY(10px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* =========================================
+   ✨ UX UPGRADE V11.0: Smart Reminders & Clickable Dashboard
+========================================= */
+
+/* 1. สีไฮไลท์ระบบ Smart Reminders (แบบเส้นขอบซ้าย Minimalist) */
+.main-row.row-today td { background-color: var(--bg-surface); }
+.main-row.row-overdue td { background-color: var(--bg-surface); }
+
+/* สร้างเส้นสีหนา 4px ที่ขอบซ้ายของคอลัมน์แรก */
+.main-row.row-today td:first-child { 
+    box-shadow: inset 4px 0 0 0 #22C55E; 
+}
+.main-row.row-overdue td:first-child { 
+    box-shadow: inset 4px 0 0 0 #EF4444; 
+}
+
+/* 2. ทำให้ Dashboard Card กดได้ */
+.summary-card {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+.summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-light);
+}
+.summary-card.active-filter {
+    border-color: var(--primary);
+    background-color: var(--primary-light);
+}
+
+/* 3. ปุ่ม Pagination (เลขหน้า) */
+.pagination-container {
+    display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px; align-items: center;
+}
+.btn-page { padding: 4px 12px; font-weight: 600; }
+
+/* =========================================
+   ✨ UX UPGRADE V11.3: Dual Dark Mode & SPA Views
+========================================= */
+/* 🌟 1. ระบบ SPA View Switching (สลับหน้าเนียนๆ ไม่โหลดใหม่) */
+.app-view { display: none; animation: fadeIn 0.3s ease; }
+.app-view.active-view { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* 🌟 2. ปรับ Theme โปเกมอนให้เด่นชัด */
+body.theme-charmander { --primary: #F97316; --primary-hover: #EA580C; --primary-light: #FFF7ED; --bg-body: #FFF7ED; }
+body.theme-squirtle { --primary: #0EA5E9; --primary-hover: #0284C7; --primary-light: #F0F9FF; --bg-body: #F0F9FF; }
+body.theme-bulbasaur { --primary: #10B981; --primary-hover: #059669; --primary-light: #ECFDF5; --bg-body: #ECFDF5; }
+body.theme-pikachu { --primary: #FACC15; --primary-hover: #EAB308; --primary-light: #FEF9C3; --bg-body: #FFFBEB; }
+
+/* 👻 3. TRUE DARK MODE (Gastly & Mew) */
+body.theme-gastly { 
+    --primary: #A855F7; --primary-hover: #9333EA; --primary-light: rgba(168, 85, 247, 0.15); 
+    --bg-body: #0F172A; --bg-surface: #1E293B; --text-main: #F8FAFC; --text-muted: #94A3B8; --border-color: #334155; 
+}
+body.theme-mew { 
+    --primary: #F472B6; --primary-hover: #DB2777; --primary-light: rgba(244, 114, 182, 0.15); 
+    --bg-body: #281728; --bg-surface: #3E2436; --text-main: #FDF2F8; --text-muted: #FBCFE8; --border-color: #502E46; 
+}
+
+/* ตั้งกฎให้กล่องต่างๆ กลืนไปกับความมืดเมื่อเปิด Dark Mode */
+body.is-dark .data-table th, body.is-dark .modal-header, body.is-dark .modal-footer { background: var(--bg-body); color: var(--text-main); border-color: var(--border-color); }
+body.is-dark .data-table tbody tr.main-row:hover { background: var(--bg-body); }
+body.is-dark .input-search, body.is-dark .e-input, body.is-dark textarea, body.is-dark .seamless-input:focus { background: var(--bg-body); color: var(--text-main); border-color: var(--border-color); }
+body.is-dark .crm-box, body.is-dark .crm-drawer { background: var(--bg-surface); }
+body.is-dark .settings-header { background: var(--bg-surface); border-color: var(--border-color); }
+
+body { transition: background-color 0.5s ease, color 0.3s ease; }
+
+/* ⚙️ 4. ดีไซน์หน้า Settings (Standard Layout) */
+.settings-wrapper { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.settings-card { background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); overflow: hidden; transition: 0.3s; }
+.settings-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); }
+.settings-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+.settings-desc { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+.settings-body { padding: 24px; }
+.settings-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px dashed var(--border-color); }
+.settings-row:last-child { border-bottom: none; padding-bottom: 0; }
+.settings-label { font-weight: 600; color: var(--text-main); }
+.settings-value { color: var(--text-muted); font-size: 0.9rem; }
+
+/* 🔴⚪ 5. Pokéball UI Design */
+.pokeball-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+.theme-option { display: flex; flex-direction: column; align-items: center; gap: 12px; cursor: pointer; }
+.pokeball { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--text-main); position: relative; overflow: hidden; background: #FFFFFF; box-shadow: var(--shadow-md); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; }
+.pokeball::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%; background: var(--ball-color, #EF4444); border-bottom: 4px solid var(--text-main); }
+.pokeball::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 18px; height: 18px; background: #FFFFFF; border: 3px solid var(--text-main); border-radius: 50%; box-shadow: inset 0 0 0 2px #E2E8F0; }
+.theme-option:hover .pokeball { transform: scale(1.15) rotate(15deg); }
+.theme-option.active .pokeball { transform: scale(1.2); box-shadow: 0 0 0 4px var(--primary-light), 0 0 20px var(--primary); }
+.theme-option.active .pokeball::after { background: var(--primary-light); border-color: var(--primary); }
+.theme-option span { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); transition: 0.3s; }
+.theme-option.active span { color: var(--primary); }
+
+/* =========================================
+   🎨 ปุ่มเลือก Theme ด่วน (Quick Theme Dots)
+========================================= */
+.theme-dot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    user-select: none;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.theme-dot:hover {
+    transform: scale(1.25);
+    box-shadow: var(--shadow-md);
+    z-index: 10;
+}
+
+/* =========================================
+   🔴⚪ Small Pokéball for Topbar (V11.6)
+========================================= */
+.pokeball-sm {
+    width: 32px; height: 32px; border-radius: 50%;
+    /* ขอบนอกสีตาม Theme */
+    border: 2px solid var(--text-main); 
+    position: relative; overflow: hidden;
+    background: #FFFFFF; /* ครึ่งล่างสีขาวเสมอ */
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    flex-shrink: 0; /* กันเบียด */
+}
+
+/* ครึ่งบนของ Pokéball จิ๋ว (สีตามธาตุ ดึงค่าจาก JS) */
+.pokeball-sm::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 50%;
+    background: var(--ball-color, #FACC15); /* ค่า Default คือเหลือง Pikachu */
+    border-bottom: 2px solid var(--text-main);
+}
+
+/* ปุ่มวงกลมตรงกลางจิ๋ว */
+.pokeball-sm::after {
+    content: ''; position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 10px; height: 10px; background: #FFFFFF;
+    border: 2px solid var(--text-main); border-radius: 50%;
+    box-shadow: inset 0 0 0 1px #E2E8F0;
+}
+
+/* เอฟเฟกต์ตอน Hover ที่ปุ่มแม่ ทำให้บอลลูกดุ๊กดิ๊ก */
+#btnTopbarTheme:hover .pokeball-sm {
+    transform: scale(1.15) rotate(15deg);
+    box-shadow: var(--shadow-md);
+}

@@ -2,67 +2,286 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buzz Guide Planner</title>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="style.css"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Buzz Guide CRM - Pokémon Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="mobile.css" media="screen and (max-width: 768px)">
 </head>
-<body>
-
-    <div id="loginScreen">
-        <div class="login-card">
-            <h2>🔒 เข้าสู่ระบบ</h2>
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;">Buzz Guide Business Planner</p>
-            <input type="password" id="pinInput" placeholder="กรอกรหัส PIN" maxlength="4" onkeypress="handleEnter(event)">
-            <button class="btn-main" style="width: 100%;" onclick="verifyPIN()">เข้าใช้งาน</button>
-        </div>
-    </div>
-
-    <div id="appContent">
-        <nav class="navbar">
-            <h2>Buzz Guide Planner</h2>
-            <div style="display: flex; align-items: center;">
-                <div class="nav-links">
-                    <button onclick="switchTab('dashboard', this)">ภาพรวม (Dashboard)</button>
-                    <button class="active" onclick="switchTab('contacts', this)">รายชื่อ (Contacts)</button>
-                    <button onclick="switchTab('goals', this)">เป้าหมาย (Goals)</button>
-                    <button onclick="switchTab('daily', this)">งานรายวัน (Daily)</button>
-                </div>
-                <select class="theme-selector" onchange="changeTheme(this.value)" id="themeSelect">
-                    <option value="morning">🌤️ Morning (Light)</option>
-                    <option value="sakura">🌸 Sakura (Pink)</option>
-                    <option value="bee">🐝 Bee (Yellow)</option>
-                    <option value="midnight">🌙 Midnight (Dark)</option>
-                </select>
-            </div>
-        </nav>
-
-        <div class="container">
+<body class="theme-pikachu"> 
+<div class="app-layout">
+    
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><span style="margin-right: 8px;">✨</span> CRM Buzz</div>
+        <div class="sidebar-nav">
+            <div class="nav-section">Main Menu</div>
+            <div class="nav-item active" id="nav-contacts" onclick="switchView('contacts')">👥 รายชื่อผู้มุ่งหวัง</div>
+            <div class="nav-item">📅 ปฏิทินนัดหมาย</div>
+            <div class="nav-item">📊 รายงานยอดขาย</div>
             
-            <div id="dashboard" class="section">
-                <div class="card">
-                    <h3>📊 ภาพรวมธุรกิจ (Dashboard)</h3>
-                    <p style="margin-top: 10px; color: var(--text-muted);">ระบบกำลังอยู่ในระหว่างการพัฒนา... สลับไปที่แท็บ "รายชื่อ" เพื่อเริ่มทำงาน</p>
-                </div>
+            <div class="nav-section">Settings</div>
+            <div class="nav-item" id="nav-settings" onclick="switchView('settings')">⚙️ ตั้งค่าระบบ</div>  
+        </div>
+    </aside>
+
+    <main class="main-wrapper">
+        <header class="topbar">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                <h1 class="topbar-title">รายชื่อผู้มุ่งหวัง</h1>
             </div>
-
-            <div id="contacts" class="section active"></div>
-
-            <div id="goals" class="section"></div>
-
-            <div id="daily" class="section">
-                <div class="card">
-                    <h3>📝 งานรายวัน (Daily Routine)</h3>
-                    <p style="margin-top: 10px; color: var(--text-muted);">รอการพัฒนาในสเตปต่อไป...</p>
-                </div>
+            <div class="topbar-actions">
+                <button class="btn-icon-dots" id="btnTopbarTheme" onclick="showFilterMenu('popThemeQuick', this); event.stopPropagation();" title="เปลี่ยนธีมด่วน" style="width: 40px; height: 40px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; border: none; background: transparent;">
+                    <div class="pokeball-sm" id="topbarPokeball"></div>
+                </button>
+                <div class="avatar-circle">P</div>
             </div>
+        </header>
 
+        <div class="content-area">
+            <div class="content-max-width">
+                
+                <div id="contacts-view" class="app-view active-view">
+                    <div class="summary-grid">
+                        <div class="summary-card active-filter" onclick="setDashboardFilter('all')"><div class="summary-label">รายชื่อทั้งหมด</div><div class="summary-value" id="summary-total">0</div></div>
+                        <div class="summary-card" onclick="setDashboardFilter('appts')"><div class="summary-label">นัดหมายถัดไป</div><div class="summary-value" id="summary-appts">0</div></div>
+                        <div class="summary-card" onclick="setDashboardFilter('success')"><div class="summary-label">ซื้อ/สมัครแล้ว</div><div class="summary-value" id="summary-success">0</div></div>
+                    </div>
+
+                    <div class="table-card" style="margin-top: 24px;">
+                        <div class="table-toolbar" style="padding: 16px; background: var(--bg-surface); border-bottom: 1px solid var(--border-color); display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                            <div class="input-group" style="flex: 1; min-width: 250px;">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="searchInput" class="input-search" style="width: 100%;" placeholder="ค้นหาชื่อ, เบอร์โทร, เรื่องที่นัด..." onkeyup="resetPageAndRender()">
+                            </div>
+                            <button class="btn btn-primary btn-save-glow" style="white-space: nowrap; padding: 10px 20px;" onclick="openAddModal()">➕ เพิ่มรายชื่อใหม่</button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table" id="contactsTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px; text-align: center;">#</th>
+                                        <th style="min-width: 250px;">รายชื่อ (Contact)</th>
+                                        <th style="width: 80px; text-align: center;">อายุ</th>
+                                        <th class="th-interactive" onclick="showFilterMenu('popType', this)">ประเภท ▼</th>
+                                        <th class="th-interactive" onclick="showFilterMenu('popApptDate', this)">วันเวลานัด ▼</th>
+                                        <th class="desktop-only">เรื่องที่นัด</th>
+                                        <th class="th-interactive" style="text-align: center;" onclick="showFilterMenu('popScore', this)">FARM ▼</th>
+                                        <th class="th-interactive" onclick="showFilterMenu('popStatus', this)">สถานะ ▼</th>
+                                        <th class="th-interactive" onclick="showFilterMenu('popUpdateDate', this)">อัปเดต ▼</th>
+                                        <th style="text-align: center; width: 60px;">ระบบ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contactsTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination-footer"></div>
+                    </div>
+                </div>
+
+                <div id="settings-view" class="app-view">
+                    <div class="settings-wrapper">
+                        <div class="settings-card">
+                            <div class="settings-header">
+                                <div class="settings-title">✨ รูปลักษณ์และธีม (Appearance)</div>
+                                <div class="settings-desc">เลือก Pokéball ประจำตัวเพื่อเปลี่ยนโทนสี (Gastly และ Mew คือ Dark Mode)</div>
+                            </div>
+                            <div class="settings-body">
+                                <div class="pokeball-container">
+                                    <div class="theme-option" onclick="setTheme('pikachu', this)" title="pikachu"><div class="pokeball" style="--ball-color: #FACC15;"></div><span>Pikachu</span></div>
+                                    <div class="theme-option" onclick="setTheme('charmander', this)" title="charmander"><div class="pokeball" style="--ball-color: #F97316;"></div><span>Charmander</span></div>
+                                    <div class="theme-option" onclick="setTheme('squirtle', this)" title="squirtle"><div class="pokeball" style="--ball-color: #0EA5E9;"></div><span>Squirtle</span></div>
+                                    <div class="theme-option" onclick="setTheme('bulbasaur', this)" title="bulbasaur"><div class="pokeball" style="--ball-color: #10B981;"></div><span>Bulbasaur</span></div>
+                                    <div class="theme-option" onclick="setTheme('mew', this)" title="mew"><div class="pokeball" style="--ball-color: #F472B6;"></div><span>Mew (Dark)</span></div>
+                                    <div class="theme-option" onclick="setTheme('gastly', this)" title="gastly"><div class="pokeball" style="--ball-color: #A855F7;"></div><span>Gastly (Dark)</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <div class="settings-header">
+                                <div class="settings-title">👤 บัญชีผู้ใช้งาน (Account)</div>
+                                <div class="settings-desc">ข้อมูลโปรไฟล์และระดับสิทธิ์การเข้าถึงของคุณ</div>
+                            </div>
+                            <div class="settings-body">
+                                <div class="settings-row"><span class="settings-label">ชื่อผู้ใช้งาน</span><span class="settings-value">Kiear (Pond)</span></div>
+                                <div class="settings-row"><span class="settings-label">ระดับสิทธิ์ (Role)</span><span class="settings-value">Administrator</span></div>
+                                <div class="settings-row"><span class="settings-label">สถานะการเชื่อมต่อ</span><span class="settings-value" style="color: #10B981; font-weight: 600;">Online 🟢</span></div>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <div class="settings-header">
+                                <div class="settings-title">🛠️ ระบบและฐานข้อมูล (System & Data)</div>
+                                <div class="settings-desc">การจัดการหน่วยความจำและเวอร์ชันแอปพลิเคชัน</div>
+                            </div>
+                            <div class="settings-body">
+                                <div class="settings-row"><span class="settings-label">เวอร์ชันปัจจุบัน</span><span class="settings-value">V11.3 (SPA Stable)</span></div>
+                                <div class="settings-row"><span class="settings-label">แหล่งจัดเก็บข้อมูล</span><span class="settings-value">Google Sheets API</span></div>
+                                <div class="settings-row"><span class="settings-label">หน่วยความจำชั่วคราว (Cache)</span><button class="btn btn-outline" style="padding: 4px 12px; font-size: 0.8rem;" onclick="localStorage.removeItem('buzzGuideContacts'); location.reload();">🗑️ ล้างแคชตาราง</button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="popType" class="filter-popover" onclick="event.stopPropagation()">
+    <div style="font-weight:700; margin-bottom:8px; color:var(--primary); border-bottom:1px solid var(--border-color); padding-bottom:4px;">📁 กรองตามประเภท</div>
+    <label><input type="checkbox" class="cb-type" value="Memory Jogger" onchange="resetPageAndRender()"> Memory Jogger</label>
+    <label><input type="checkbox" class="cb-type" value="Sponsor List" onchange="resetPageAndRender()"> Sponsor List</label>
+    <label><input type="checkbox" class="cb-type" value="Customer List" onchange="resetPageAndRender()"> Customer List</label>
+    <label><input type="checkbox" class="cb-type" value="ABO" onchange="resetPageAndRender()"> ABO</label>
+    <label><input type="checkbox" class="cb-type" value="MEM" onchange="resetPageAndRender()"> MEM</label>
+</div>
+
+<div id="popStatus" class="filter-popover" onclick="event.stopPropagation()">
+    <div style="font-weight:700; margin-bottom:8px; color:var(--primary); border-bottom:1px solid var(--border-color); padding-bottom:4px;">🏷️ กรองตามสถานะ</div>
+    <label><input type="checkbox" class="cb-status" value="ลิสต์รายชื่อ" checked onchange="resetPageAndRender()"> ลิสต์รายชื่อ</label>
+    <label><input type="checkbox" class="cb-status" value="กำลังติดต่อ" checked onchange="resetPageAndRender()"> กำลังติดต่อ</label>
+    <label><input type="checkbox" class="cb-status" value="นัดหมายแล้ว" checked onchange="resetPageAndRender()"> นัดหมายแล้ว</label>
+    <label><input type="checkbox" class="cb-status" value="นำเสนอแล้ว" checked onchange="resetPageAndRender()"> นำเสนอแล้ว</label>
+    <label><input type="checkbox" class="cb-status" value="ติดตามผล" checked onchange="resetPageAndRender()"> ติดตามผล</label>
+    <label><input type="checkbox" class="cb-status" value="ซื้อสินค้า/สมัครแล้ว" checked onchange="resetPageAndRender()"> ซื้อสินค้า/สมัครแล้ว</label>
+    
+    <label><input type="checkbox" class="cb-status" value="ปฏิเสธ" onchange="resetPageAndRender()"> ปฏิเสธ</label>
+</div>
+
+<div id="popApptDate" class="filter-popover" onclick="event.stopPropagation()" style="width: 450px; max-width: 90vw;">
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        
+        <div style="flex: 1; min-width: 180px;">
+            <div style="font-weight:700; margin-bottom:8px; color:var(--primary); border-bottom:1px solid var(--border-color); padding-bottom:4px;">⏱️ เรียงลำดับนัดหมาย</div>
+            <button class="btn btn-outline" style="width:100%; margin-bottom:6px; font-size: 0.8rem; justify-content: flex-start;" onclick="setSort('appt', 'asc'); document.getElementById('popApptDate').style.display='none';">🔽 ใกล้ขึ้นก่อน</button>
+            <button class="btn btn-outline" style="width:100%; font-size: 0.8rem; justify-content: flex-start;" onclick="setSort('appt', 'desc'); document.getElementById('popApptDate').style.display='none';">🔼 ไกลขึ้นก่อน</button>
+
+            <div style="font-weight:700; margin-top:12px; margin-bottom:8px; color:var(--primary); border-bottom:1px solid var(--border-color); padding-bottom:4px;">🗓️ กรองแบบด่วน</div>
+            <label><input type="radio" name="rad-appt" value="all" checked onchange="document.getElementById('filterApptStart').value=''; document.getElementById('filterApptEnd').value=''; resetPageAndRender();"> 📅 แสดงทั้งหมด</label>
+            <label><input type="radio" name="rad-appt" value="overdue" onchange="document.getElementById('filterApptStart').value=''; document.getElementById('filterApptEnd').value=''; resetPageAndRender();"> 🚨 เลยกำหนดนัด</label>
+            <label><input type="radio" name="rad-appt" value="today" onchange="document.getElementById('filterApptStart').value=''; document.getElementById('filterApptEnd').value=''; resetPageAndRender();"> 🟢 นัดวันนี้ / พรุ่งนี้</label>
+            <label><input type="radio" name="rad-appt" value="upcoming" onchange="document.getElementById('filterApptStart').value=''; document.getElementById('filterApptEnd').value=''; resetPageAndRender();"> ⏳ นัดภายใน 7 วัน</label>
+        </div>
+
+        <div style="flex: 1; min-width: 180px; border-left: 1px dashed var(--border-color); padding-left: 16px;">
+            <div style="font-weight:700; margin-bottom:12px; color:var(--primary); border-bottom:1px solid var(--border-color); padding-bottom:4px;">📅 กำหนดช่วงเวลาเอง</div>
+            
+            <label class="e-label" style="font-size:0.75rem;">ตั้งแต่ (From):</label>
+            <input type="date" id="filterApptStart" class="e-input" style="width:100%; margin-bottom:12px;" onchange="document.querySelector('input[name=rad-appt][value=all]').checked=true; resetPageAndRender();">
+            
+            <label class="e-label" style="font-size:0.75rem;">ถึง (To):</label>
+            <input type="date" id="filterApptEnd" class="e-input" style="width:100%; margin-bottom:16px;" onchange="document.querySelector('input[name=rad-appt][value=all]').checked=true; resetPageAndRender();">
+            
+            <button class="btn btn-outline" style="width:100%; font-size:0.8rem; border-color:var(--danger); color:var(--danger);" onclick="document.getElementById('filterApptStart').value=''; document.getElementById('filterApptEnd').value=''; resetPageAndRender();">ล้างปฏิทิน</button>
         </div>
     </div>
+</div>
 
-    <script src="app.js"></script>
-    <script src="contacts.js"></script>
-    <script src="goals.js"></script>
+<div id="popScore" class="filter-popover" onclick="event.stopPropagation()">
+    <div style="font-weight:700; margin-bottom:8px; color:var(--primary); border-bottom:1px solid var(--border-color); padding-bottom:4px;">⭐ กรองตามศักยภาพ</div>
+    <label><input type="radio" name="rad-score" value="all" checked onchange="resetPageAndRender()"> 🌟 แสดงทั้งหมด</label>
+    <label><input type="radio" name="rad-score" value="4" onchange="resetPageAndRender()"> ⭐ 4 ดาวขึ้นไป (High)</label>
+    <label><input type="radio" name="rad-score" value="3" onchange="resetPageAndRender()"> ⭐ 3 ดาวขึ้นไป (Mid)</label>
+    <label><input type="radio" name="rad-score" value="low" onchange="resetPageAndRender()"> 🔻 ต่ำกว่า 3 ดาว (Low)</label>
+</div>
+
+<div id="popUpdateDate" class="filter-popover" onclick="event.stopPropagation()" style="width: 400px; max-width: 90vw;">
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        
+        <div style="flex: 1; min-width: 160px;">
+            <div style="font-weight:700; margin-bottom:8px; color:var(--primary); border-bottom:1px solid var(--border-color); padding-bottom:4px;">⏱️ เรียงลำดับข้อมูล</div>
+            <button class="btn btn-outline" style="width:100%; margin-bottom:6px; font-size: 0.8rem; justify-content: flex-start;" onclick="setSort('update', 'desc'); document.getElementById('popUpdateDate').style.display='none';">🔽 ล่าสุดขึ้นก่อน</button>
+            <button class="btn btn-outline" style="width:100%; font-size: 0.8rem; justify-content: flex-start;" onclick="setSort('update', 'asc'); document.getElementById('popUpdateDate').style.display='none';">🔼 เก่าสุดขึ้นก่อน</button>
+        </div>
+
+        <div style="flex: 1; min-width: 160px; border-left: 1px dashed var(--border-color); padding-left: 16px;">
+            <div style="font-weight:700; margin-bottom:12px; color:var(--primary); border-bottom:1px solid var(--border-color); padding-bottom:4px;">📅 กรองวันที่อัปเดต</div>
+            
+            <label class="e-label" style="font-size:0.75rem;">ตั้งแต่ (From):</label>
+            <input type="date" id="filterUpdateStart" class="e-input" style="width:100%; margin-bottom:12px;" onchange="resetPageAndRender()">
+            
+            <label class="e-label" style="font-size:0.75rem;">ถึง (To):</label>
+            <input type="date" id="filterUpdateEnd" class="e-input" style="width:100%; margin-bottom:16px;" onchange="resetPageAndRender()">
+            
+            <button class="btn btn-outline" style="width:100%; font-size:0.8rem; border-color:var(--danger); color:var(--danger);" onclick="document.getElementById('filterUpdateStart').value=''; document.getElementById('filterUpdateEnd').value=''; resetPageAndRender();">ล้างปฏิทิน</button>
+        </div>
+    </div>
+</div>
+
+<div id="popThemeQuick" class="filter-popover" onclick="event.stopPropagation()" style="min-width: 220px; padding: 16px;">
+    <div style="font-weight:700; margin-bottom:12px; color:var(--text-main); border-bottom:1px solid var(--border-color); padding-bottom:8px;">🎨 เลือกธีมด่วน (Quick Theme)</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; justify-items: center;">
+        <div class="theme-dot" style="background:#FACC15; width:32px; height:32px; font-size:1rem;" onclick="setTheme('pikachu'); document.getElementById('popThemeQuick').style.display='none';" title="Pikachu">⚡</div>
+        <div class="theme-dot" style="background:#F97316; width:32px; height:32px; font-size:1rem;" onclick="setTheme('charmander'); document.getElementById('popThemeQuick').style.display='none';" title="Charmander">🔥</div>
+        <div class="theme-dot" style="background:#0EA5E9; width:32px; height:32px; font-size:1rem;" onclick="setTheme('squirtle'); document.getElementById('popThemeQuick').style.display='none';" title="Squirtle">💧</div>
+        <div class="theme-dot" style="background:#10B981; width:32px; height:32px; font-size:1rem;" onclick="setTheme('bulbasaur'); document.getElementById('popThemeQuick').style.display='none';" title="Bulbasaur">🍃</div>
+        <div class="theme-dot" style="background:#F472B6; width:32px; height:32px; font-size:1rem;" onclick="setTheme('mew'); document.getElementById('popThemeQuick').style.display='none';" title="Mew (Dark)">✨</div>
+        <div class="theme-dot" style="background:#A855F7; width:32px; height:32px; font-size:1rem;" onclick="setTheme('gastly'); document.getElementById('popThemeQuick').style.display='none';" title="Gastly (Dark)">👻</div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="addContactModal">
+    <div class="modal-content" style="max-width: 550px;">
+        <div class="modal-header">
+            <h3>➕ เพิ่มรายชื่อใหม่</h3>
+            <button onclick="closeAddModal()" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color:var(--text-main);">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="addContactForm" onsubmit="submitNewContact(event)">
+                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                    <div class="e-group" style="flex: 1; min-width: 200px;">
+                        <label class="e-label">ชื่อ-นามสกุล <span style="color:#EF4444">*</span></label>
+                        <input type="text" id="addName" class="e-input" required placeholder="เช่น สมชาย ใจดี">
+                    </div>
+                    <div class="e-group" style="flex: 1; min-width: 200px;">
+                        <label class="e-label">เบอร์โทรศัพท์</label>
+                        <input type="text" id="addPhone" class="e-input" placeholder="08X-XXX-XXXX">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                    <div class="e-group" style="flex: 1; min-width: 200px;">
+                        <label class="e-label">ประเภท</label>
+                        <select id="addType" class="e-input" style="width: 100%;">
+                            <option value="Memory Jogger">Memory Jogger</option>
+                            <option value="Sponsor List">Sponsor List</option>
+                            <option value="Customer List">Customer List</option>
+                            <option value="ABO">ABO</option>
+                            <option value="MEM">MEM</option>
+                            <option value="Upline">Upline</option>
+                            <option value="Sideline">Sideline</option>
+                        </select>
+                    </div>
+                    <div class="e-group" style="flex: 1; min-width: 200px;">
+                        <label class="e-label">สถานะเริ่มต้น</label>
+                        <select id="addStatus" class="e-input" style="width: 100%;">
+                            <option value="ลิสต์รายชื่อ">ลิสต์รายชื่อ</option>
+                            <option value="กำลังติดต่อ">กำลังติดต่อ</option>
+                            <option value="นัดหมายแล้ว">นัดหมายแล้ว</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="e-group">
+                    <label class="e-label">รายละเอียดเบื้องต้น / โน้ตย่อ</label>
+                    <textarea id="addNote" class="e-input" rows="3" placeholder="ระบุข้อมูลความสนใจ หรือปัญหาของเคสนี้..."></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeAddModal()">ยกเลิก</button>
+            <button type="submit" form="addContactForm" class="btn btn-primary" id="btnAddSubmit" style="min-width: 120px;">บันทึกรายชื่อ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+</script>
+<script src="settings.js"></script>
+<script src="contacts.js"></script>
 </body>
 </html>

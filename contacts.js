@@ -1,382 +1,856 @@
-// =========================================
-// CONTACTS.JS - ระบบฐานข้อมูลรายชื่อ
-// =========================================
+// =========================================================================
+// CONTACTS.JS - ระบบฐานข้อมูลรายชื่อ (BUZZ GUIDE CRM V11.2 - CLEAN ARCHITECTURE)
+// =========================================================================
 
-// 1. นำโครงสร้าง HTML ใส่ในหน้าจอ
-const contactsTemplate = `
-    <div id="statsHoverCard" class="stats-hover-card"></div>
-    <div id="checklistHoverCard" class="checklist-hover-card"></div>
+// -----------------------------------------
+// 1. CONFIG & STATE
+// -----------------------------------------
+const API_URL = "https://script.google.com/macros/s/AKfycbzxkUXB8S1LhwJERDd4HlrsMTLmvAV-MWBya0jqeB5QTEa1tjsdX2aXV4GVDuJajZWRnQ/exec"; 
 
-    <div class="card contacts-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-shrink: 0; flex-wrap: wrap; gap: 1rem;">
-            <h3>👥 ฐานข้อมูลรายชื่อ (Contacts Master)</h3>
-            <button class="btn-main" onclick="openBulkModal()">+ เพิ่มรายชื่อใหม่</button>
-        </div>
-
-        <div class="filter-bar">
-            <input type="text" id="searchInput" placeholder="🔍 ค้นหาชื่อ, เบอร์โทร..." onkeyup="filterTable()">
-            <select id="typeFilter" onchange="filterTable()">
-                <option value="ALL">📋 ทุกประเภท (All Types)</option>
-                <option value="Memory Jogger">Memory Jogger</option>
-                <option value="Sponsor List">Sponsor List</option>
-                <option value="Customer List">Customer List</option>
-                <option value="ABO">ABO</option>
-                <option value="MEM">MEM</option>
-            </select>
-            <select id="statusFilter" onchange="filterTable()">
-                <option value="ALL">📌 ทุกสถานะ (All Status)</option>
-                <option value="ลิสต์รายชื่อ">ลิสต์รายชื่อ</option>
-                <option value="กำลังติดต่อ">กำลังติดต่อ</option>
-                <option value="นัดหมายแล้ว">นัดหมายแล้ว</option>
-                <option value="นำเสนอแล้ว">นำเสนอแล้ว</option>
-                <option value="ติดตามผล">ติดตามผล</option>
-                <option value="ซื้อสินค้า/สมัครแล้ว">ซื้อสินค้า/สมัครแล้ว</option>
-                <option value="ปฏิเสธ">ปฏิเสธ</option>
-            </select>
-        </div>
-
-        <div class="table-container">
-            <table id="contactsTable">
-                <thead>
-                    <tr>
-                        <th class="col-id">หมายเลข</th>
-                        <th class="col-name">ชื่อ - นามสกุล</th>
-                        <th class="col-age">อายุ</th>
-                        <th class="col-type">ประเภท</th>
-                        <th class="col-rel">สายสัมพันธ์</th>
-                        <th class="col-score">คะแนนเฉลี่ย</th>
-                        <th class="col-status">สถานะปัจจุบัน</th>
-                        <th class="col-update">อัปเดตล่าสุด</th>
-                        <th class="col-action" style="width: 80px; text-align: center;">สถานะ</th>
-                    </tr>
-                </thead>
-                <tbody id="contactsTableBody"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="bulkModal">
-        <div class="modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 id="modalTitle">➕ เพิ่มรายชื่อใหม่ (หลายรายการ)</h3>
-                <div class="toolbar-group">
-                    <button class="btn-outline" type="button" onclick="downloadCSVTemplate()">📥 โหลดตัวอย่าง CSV</button>
-                    <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="handleCSV(event)">
-                    <button class="btn-outline" type="button" onclick="document.getElementById('csvFileInput').click()">📂 อัปโหลดไฟล์ CSV</button>
-                    <button class="btn-success" type="button" onclick="togglePasteArea()">📝 วางข้อความ (Paste Data)</button>
-                </div>
-            </div>
-            <div id="pasteCsvArea" style="display: none; margin-bottom: 1.5rem; background: var(--th-bg); padding: 1rem; border-radius: 8px; border: 1px dashed var(--border-color);">
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">คัดลอกข้อมูลจากตาราง Excel แล้วนำมาวางในช่องด้านล่าง (คอลัมน์: ชื่อ, ประเภท, เบอร์โทร, สถานะ, A, F, M)</p>
-                <textarea id="csvRawText" rows="4" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; background: var(--card-bg); color: var(--text-main);" placeholder="สมชาย,Memory Jogger,0812345678,ลิสต์รายชื่อ,4,4,3"></textarea>
-                <div style="text-align: right; margin-top: 0.5rem;"><button type="button" class="btn-main" onclick="importFromRawText()">⬇️ นำเข้าข้อมูล</button></div>
-            </div>
-            <form id="bulkForm" onsubmit="submitBulkForm(event)">
-                <input type="hidden" id="formAction" value="CREATE">
-                <div style="overflow-x: auto; margin-bottom: 1rem; max-height: 40vh;">
-                    <table class="bulk-table">
-                        <thead><tr><th style="min-width: 150px;">ชื่อ - นามสกุล*</th><th style="min-width: 130px;">ประเภท*</th><th style="min-width: 110px;">เบอร์โทร</th><th style="min-width: 140px;">สถานะ*</th><th>A</th><th>F</th><th>M</th><th style="min-width: 50px;">ลบ</th></tr></thead>
-                        <tbody id="bulkInputBody"></tbody>
-                    </table>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-                    <button type="button" class="btn-outline" onclick="addBulkRow()">+ เพิ่มแถวใหม่</button>
-                    <div style="display: flex; gap: 1rem;">
-                        <button type="button" class="btn-outline" style="color: var(--text-muted); border-color: var(--text-muted);" onclick="closeModal()">ยกเลิก</button>
-                        <button type="submit" class="btn-main" id="submitBtn">บันทึกข้อมูล</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-`;
-document.getElementById('contacts').innerHTML = contactsTemplate;
-
-// 2. ตัวแปรและการประมวลผล
 let contactsData = [];
+let autoSaveTimers = {}; 
+let currentSortCol = 'appt'; 
+let currentSortDir = 'asc';   
+let currentPage = 1; 
+let itemsPerPage = 20; 
+let currentDashboardFilter = 'all'; 
+
+let currentExpandedId = null; 
+let currentEditingId = null;
+
 const statusOptions = [ "ลิสต์รายชื่อ", "กำลังติดต่อ", "นัดหมายแล้ว", "นำเสนอแล้ว", "ติดตามผล", "ซื้อสินค้า/สมัครแล้ว", "ปฏิเสธ" ];
-let autoSaveTimers = {};
-let hoverTimer = null;
+const skillList = ["1. สาธิตสินค้า", "2. เขียนโมเดลธุรกิจ", "3. ผ่าแผนการตลาด", "4. ตอบข้อโต้แย้ง", "5. พูดความสวยงาม", "6. ติดตาม DL+จัด HM", "7. วิเคราะห์+เป้าหมาย", "8. ผ่าแผน 6%, 1%", "9. ถ่ายทอดได้"];
+const standardProducts = ['Breakfast Set', 'eSpring', 'Atmosphere Sky', 'Atmosphere Drive', 'Spa', '6WNY / Detox', 'Workshop'];
+const defaultNote = `Profile:\n- ชื่อเล่น: \n- อายุ: \n- จบจาก: \n- แต่งงาน มีลูก: \n- จุดที่น่าจะเปิดใจ/Pain Point: \n- รู้จัก AW ไหม: `;
 
-// Helpers ย่อยสำหรับ Contacts
-function renderEmojiStars(score) { let s = parseInt(score) || 1; return '⭐'.repeat(s); }
-function isChecked(productsString, item) { if(!productsString) return false; return productsString.split(',').map(s => s.trim()).includes(item); }
+// 🌟 ยุบรวมการตั้งค่าเริ่มต้นไว้ที่เดียว
+window.onload = () => { 
+    fetchContacts(); 
+    const savedTheme = localStorage.getItem('buzzGuideTheme') || 'pikachu';
+    setTheme(savedTheme);
+};
 
-function getTypeColorClass(type) { switch(type) { case 'Memory Jogger': return 'type-jogger'; case 'Sponsor List': return 'type-sponsor'; case 'Customer List': return 'type-customer'; case 'ABO': return 'type-abo'; case 'MEM': return 'type-mem'; default: return 'type-jogger'; } }
-function getStatusColorClass(status) { switch(status) { case 'ลิสต์รายชื่อ': return 'status-list'; case 'กำลังติดต่อ': return 'status-contacting'; case 'นัดหมายแล้ว': return 'status-appointed'; case 'นำเสนอแล้ว': return 'status-presented'; case 'ติดตามผล': return 'status-followup'; case 'ซื้อสินค้า/สมัครแล้ว': return 'status-success'; case 'ปฏิเสธ': return 'status-rejected'; default: return 'status-list'; } }
+// -----------------------------------------
+// 2. HELPER FUNCTIONS
+// -----------------------------------------
+function formatDateShort(dateStr) { 
+    if (!dateStr) return '-'; 
+    const d = new Date(dateStr); if (isNaN(d)) return dateStr; 
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yy = (d.getFullYear() + 543).toString().slice(-2);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return `${dd}/${mm}/${yy} ${hh}:${min}`; 
+}
 
-function updateSelectColor(el, kind, personID) {
-    el.className = `inline-input colored-select ${kind === 'type' ? 'r-type' : 'r-status'}`;
-    if(kind === 'type') el.classList.add(getTypeColorClass(el.value));
-    if(kind === 'status') {
-        el.classList.add(getStatusColorClass(el.value));
-        const dateContainer = document.getElementById(`row-${personID}`).querySelector('.last-update-text');
-        dateContainer.innerHTML = `📅 ${formatDateTime(new Date().toISOString())} (บันทึก...)`;
-        dateContainer.style.color = 'var(--warning)';
+function formatDateOnly(dateStr) { 
+    if (!dateStr) return '-'; 
+    const d = new Date(dateStr); if (isNaN(d)) return dateStr; 
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yy = (d.getFullYear() + 543).toString().slice(-2);
+    return `${dd}/${mm}/${yy}`; 
+}
+
+function calculateAge(dobStr) { 
+    if(!dobStr) return ''; 
+    const dob = new Date(dobStr); if(isNaN(dob)) return ''; 
+    const age_dt = new Date(Date.now() - dob.getTime()); 
+    return Math.abs(age_dt.getUTCFullYear() - 1970); 
+}
+
+function calculateScore(person, mode) { 
+    let m = parseInt(person.Score_Money || 3); 
+    let r = parseInt(person.Score_Relation || 3); 
+    let score = 0; 
+    if (mode === 'FARM') { 
+        let f = parseInt(person.Score_Friendly || 3); 
+        let a = parseInt(person.Score_Active || 3); 
+        score = (f + a + r + m) / 4; 
+    } else { 
+        let au = parseInt(person.Score_Authority || 3); 
+        let n = parseInt(person.Score_Need || 3); 
+        score = (m + au + r + n) / 4; 
+    } 
+    return Math.floor(score * 10) / 10; 
+}
+
+function toLocalDatetimeInput(dateStr) { 
+    if (!dateStr) return ''; 
+    const d = new Date(dateStr); 
+    if (isNaN(d)) return dateStr.substring(0,16); 
+    const yy = d.getFullYear(); 
+    const mm = String(d.getMonth() + 1).padStart(2, '0'); 
+    const dd = String(d.getDate()).padStart(2, '0'); 
+    const hh = String(d.getHours()).padStart(2, '0'); 
+    const min = String(d.getMinutes()).padStart(2, '0'); 
+    return `${yy}-${mm}-${dd}T${hh}:${min}`; 
+}
+
+function getStarOptions(score) {
+    let html = '';
+    const currentScore = parseInt(score) || 3; 
+    for (let i = 1; i <= 5; i++) {
+        html += `<option value="${i}" ${currentScore === i ? 'selected' : ''}>${'⭐'.repeat(i)}</option>`;
     }
-    triggerAutoSave(personID);
+    return html;
 }
 
-function generateStatusDropdownHTML(selectedValue, personID) {
-    let options = `<option value="">-- สถานะ --</option>`;
-    statusOptions.forEach(opt => { options += `<option value="${opt}" ${selectedValue === opt ? 'selected' : ''}>${opt}</option>`; });
-    if(selectedValue && !statusOptions.includes(selectedValue)) options += `<option value="${selectedValue}" selected>${selectedValue}</option>`;
-    return `<select class="inline-input r-status colored-select ${getStatusColorClass(selectedValue)}" onchange="updateSelectColor(this, 'status', '${personID}'); event.stopPropagation();">${options}</select>`;
-}
-function generateTypeDropdownHTML(selectedValue, personID) {
-    const types = ['Memory Jogger', 'Sponsor List', 'Customer List', 'ABO', 'MEM'];
-    let options = ''; types.forEach(opt => { options += `<option value="${opt}" ${selectedValue === opt ? 'selected' : ''}>${opt}</option>`; });
-    return `<select class="inline-input r-type colored-select ${getTypeColorClass(selectedValue)}" onchange="updateSelectColor(this, 'type', '${personID}'); event.stopPropagation();">${options}</select>`;
-}
-function generateRPGStarSelect(val, className, personID) {
-    let options = ''; for(let i=1; i<=5; i++) { options += `<option value="${i}" ${val == i ? 'selected' : ''}>${'⭐'.repeat(i)}</option>`; }
-    return `<select class="rpg-star-select ${className}" onchange="triggerAutoSave('${personID}')">${options}</select>`;
+function getTypeColorClass(type) { 
+    const map = {
+        'Memory Jogger': 'badge-yellow', // เหลือง
+        'Sponsor List': 'badge-orange',  // ส้ม
+        'Customer List': 'badge-green',  // เขียว
+        'ABO': 'badge-red',              // แดง
+        'MEM': 'badge-blue',             // น้ำเงิน
+        'Upline': 'badge-gray',          // เทา
+        'Sideline': 'badge-gray'         // เทา
+    }; 
+    return map[type] || 'badge-gray'; 
 }
 
-function toggleProductStatus(btn, personID) {
-    if (btn.classList.contains('status-used')) { btn.classList.remove('status-used'); btn.dataset.status = 'none'; } 
-    else if (btn.classList.contains('status-interested')) { btn.classList.remove('status-interested'); btn.classList.add('status-used'); btn.dataset.status = 'used'; } 
-    else { btn.classList.add('status-interested'); btn.dataset.status = 'interested'; }
-    triggerAutoSave(personID);
-}
-function getProductStatus(productsString, itemName) {
-    if (!productsString) return 'none'; const items = productsString.split(',');
-    for (let i = 0; i < items.length; i++) { const [name, status] = items[i].split(':'); if (name.trim() === itemName) return status ? status.trim() : 'used'; }
-    return 'none';
-}
-
-// Hover Cards
-function showStatsCard(event, id) {
-    const card = document.getElementById('statsHoverCard'); const person = contactsData.find(p => p.PersonID === id); if(!person) return;
-    card.innerHTML = `<div class="sh-header">📊 วิเคราะห์ศักยภาพ</div><div class="sh-row"><span class="sh-label">A (Active)</span> <span class="sh-stars">${renderEmojiStars(person.Score_Active || 3)}</span></div><div class="sh-row"><span class="sh-label">F (Friendly)</span> <span class="sh-stars">${renderEmojiStars(person.Score_Friendly || 3)}</span></div><div class="sh-row"><span class="sh-label">M (Money)</span> <span class="sh-stars">${renderEmojiStars(person.Score_Money || 3)}</span></div><div class="sh-row"><span class="sh-label">R (Relation)</span> <span class="sh-stars">${renderEmojiStars(person.Score_Relation || 3)}</span></div>`;
-    card.style.display = 'block'; const rect = event.target.getBoundingClientRect(); const cardRect = card.getBoundingClientRect();
-    let topPos = rect.bottom + 8; let leftPos = rect.left - (cardRect.width / 2) + (rect.width / 2);
-    if (topPos + cardRect.height > window.innerHeight) topPos = rect.top - cardRect.height - 8;
-    card.style.top = topPos + 'px'; card.style.left = leftPos + 'px';
-}
-function hideStatsCard() { document.getElementById('statsHoverCard').style.display = 'none'; }
-
-function handleNameHover(event, id) {
-    clearTimeout(hoverTimer);
-    hoverTimer = setTimeout(() => {
-        const card = document.getElementById('checklistHoverCard'); const person = contactsData.find(p => p.PersonID === id); if(!person) return;
-        let itemsHTML = ''; const pList = (person.Products_Used || '').split(',').filter(i => i.trim() !== '');
-        if (pList.length === 0) itemsHTML = '<div class="ch-empty">ยังไม่มีข้อมูลสินค้า</div>';
-        else pList.forEach(item => { const [name, status] = item.split(':'); itemsHTML += `<div class="ch-item ${status || 'used'}">${name}</div>`; });
-        card.innerHTML = `<div class="ch-header">🛒 เช็คลิสต์สินค้า</div>${itemsHTML}`; card.style.display = 'block';
-        const rect = event.target.getBoundingClientRect(); const cardRect = card.getBoundingClientRect();
-        let topPos = rect.bottom + 8; let leftPos = rect.left; if (topPos + cardRect.height > window.innerHeight) topPos = rect.top - cardRect.height - 8;
-        card.style.top = topPos + 'px'; card.style.left = leftPos + 'px';
-    }, 800);
-}
-function clearNameHover() { clearTimeout(hoverTimer); document.getElementById('checklistHoverCard').style.display = 'none'; }
-
-// Fetch & Render
-async function fetchContacts() {
-    const tbody = document.getElementById('contactsTableBody');
-    if(!tbody) return; 
-    tbody.innerHTML = `<tr><td colspan="9" class="loader">กำลังโหลดข้อมูล...</td></tr>`;
-    try {
-        const response = await fetch(`${API_URL}?sheet=Contacts_Master`);
-        const result = await response.json();
-        if (result.status === "success") { contactsData = result.data; renderTable(); }
-    } catch (error) { tbody.innerHTML = `<tr><td colspan="9" style="color:red; text-align:center;">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`; }
+function getStatusColorClass(status) { 
+    const map = {
+        'ลิสต์รายชื่อ': 'badge-gray',          // เทา
+        'กำลังติดต่อ': 'badge-sky',            // ฟ้า
+        'นัดหมายแล้ว': 'badge-yellow',         // เหลือง
+        'นำเสนอแล้ว': 'badge-blue',            // น้ำเงิน
+        'ติดตามผล': 'badge-pink',              // ชมพู
+        'ซื้อสินค้า/สมัครแล้ว': 'badge-green',   // เขียว
+        'ปฏิเสธ': 'badge-red'                  // แดง
+    }; 
+    return map[status] || 'badge-gray'; 
 }
 
-function filterTable() {
-    const searchText = document.getElementById('searchInput').value.toLowerCase();
-    const typeFilter = document.getElementById('typeFilter').value;
-    const statusFilter = document.getElementById('statusFilter').value;
+function generateTypeDropdownHTML(val, id) { 
+    let opts = ''; 
+    ['Memory Jogger', 'Sponsor List', 'Customer List', 'ABO', 'MEM', 'Upline', 'Sideline'].forEach(o => opts += `<option value="${o}" ${val===o?'selected':''}>${o}</option>`); 
+    return `<select class="colored-select ${getTypeColorClass(val)}" onchange="updateSelectColor(this, 'type', '${id}'); event.stopPropagation();">${opts}</select>`; 
+}
+
+function generateStatusDropdownHTML(val, id) { 
+    let opts = '<option value="">-- สถานะ --</option>'; 
+    statusOptions.forEach(o => opts += `<option value="${o}" ${val===o?'selected':''}>${o}</option>`); 
+    return `<select class="colored-select ${getStatusColorClass(val)}" onchange="updateSelectColor(this, 'status', '${id}'); event.stopPropagation();">${opts}</select>`; 
+}
+
+function morphBtn(btn, newText, newClass, newColor, newBorder) {
+    btn.style.transform = 'scale(0.7)';
+    btn.style.opacity = '0.3';
+    setTimeout(() => {
+        btn.innerHTML = newText;
+        btn.className = newClass;
+        if(newColor) btn.style.color = newColor;
+        if(newBorder) btn.style.borderColor = newBorder;
+        btn.style.display = 'inline-flex';
+        btn.style.transform = 'scale(1)';
+        btn.style.opacity = '1';
+    }, 150);
+}
+
+// -----------------------------------------
+// 3. DASHBOARD & DATA FETCHING
+// -----------------------------------------
+function updateDashboard() {
+    if (!contactsData) return;
     
-    document.querySelectorAll('#contactsTableBody tr.main-row').forEach(tr => {
-        const nameStr = tr.getAttribute('data-name') || '';
-        const phoneStr = tr.nextElementSibling.querySelector('.ex-phone').value.toLowerCase() || '';
-        const typeStr = tr.getAttribute('data-type') || '';
-        const statusStr = tr.querySelector('.r-status').value || '';
-        
-        if ((nameStr.includes(searchText) || phoneStr.includes(searchText)) && 
-            (typeFilter === 'ALL' || typeStr === typeFilter) && 
-            (statusFilter === 'ALL' || statusStr === statusFilter)) {
-            tr.style.display = ''; if (tr.classList.contains('row-expanded')) tr.nextElementSibling.style.display = 'table-row';
-        } else { tr.style.display = 'none'; tr.nextElementSibling.style.display = 'none'; }
-    });
+    document.getElementById('summary-total').innerText = contactsData.length;
+    
+    const today = new Date(); today.setHours(0,0,0,0);
+    const upcomingAppts = contactsData.filter(c => c.Next_Appt_Date && new Date(c.Next_Appt_Date) >= today).length;
+    document.getElementById('summary-appts').innerText = upcomingAppts;
+
+    const successCount = contactsData.filter(c => c.Current_Status === 'ซื้อสินค้า/สมัครแล้ว').length;
+    document.getElementById('summary-success').innerText = successCount;
+
+    const cards = document.querySelectorAll('.summary-card');
+    if (cards.length >= 3) {
+        cards.forEach(c => { c.classList.remove('active-filter'); });
+        if (currentDashboardFilter === 'all') cards[0].classList.add('active-filter');
+        if (currentDashboardFilter === 'appts') cards[1].classList.add('active-filter');
+        if (currentDashboardFilter === 'success') cards[2].classList.add('active-filter');
+    }
 }
 
-function renderTable() {
-    const tbody = document.getElementById('contactsTableBody'); tbody.innerHTML = '';
-    if (contactsData.length === 0) { tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding: 2rem;">ยังไม่มีรายชื่อในระบบ</td></tr>`; return; }
-    const productList = ['Breakfast Set', 'eSpring', 'Atmosphere Sky', 'Atmosphere Drive', 'Spa', '6WNY / Detox', 'Workshop'];
+async function fetchContacts() { 
+    const tbody = document.getElementById('contactsTableBody'); 
+    const cachedData = localStorage.getItem('buzzGuideContacts'); 
+    
+    if (cachedData) { 
+        try { contactsData = JSON.parse(cachedData); renderTable(); updateDashboard(); } 
+        catch(e) { console.error(e); } 
+    } else { 
+        if(tbody) tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding: 3rem; color: var(--primary);">กำลังซิงค์ข้อมูล... ⏳</td></tr>`; 
+    } 
+    
+    try { 
+        const response = await fetch(`${API_URL}?sheet=Contacts_Master`); 
+        const result = await response.json(); 
+        if (result.status === "success") { 
+            contactsData = result.data; 
+            localStorage.setItem('buzzGuideContacts', JSON.stringify(contactsData)); 
+            renderTable(); updateDashboard();
+        } 
+    } catch (error) { 
+        if (!cachedData && tbody) tbody.innerHTML = `<tr><td colspan="10" style="color:var(--danger); text-align:center; padding:3rem;"><b>⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ (Offline)</b></td></tr>`; 
+    } 
+}
 
-    contactsData.forEach(row => {
-        if(!row.Name) return; 
-        const trMain = document.createElement('tr'); trMain.id = `row-${row.PersonID}`; trMain.className = 'main-row';
-        trMain.setAttribute('data-name', row.Name.toLowerCase()); trMain.setAttribute('data-type', row.Contact_Type);
-        trMain.onclick = () => toggleExpandRow(row.PersonID);
+// -----------------------------------------
+// 4. UI INTERACTIONS (THEME & SETTINGS)
+// -----------------------------------------
+function resetPageAndRender() { currentPage = 1; renderTable(); }
+function changePage(step) { currentPage += step; renderTable(); }
+function changeItemsPerPage(val) { itemsPerPage = parseInt(val); currentPage = 1; renderTable(); }
+function goToPage(page) { currentPage = page; renderTable(); }
+
+function setDashboardFilter(filterType) {
+    currentDashboardFilter = (currentDashboardFilter === filterType) ? 'all' : filterType; 
+    currentPage = 1; updateDashboard(); renderTable(); 
+}
+
+function setSort(col, dir) { currentSortCol = col; currentSortDir = dir; resetPageAndRender(); }
+
+// 🌟 ระบบสลับหน้าจอ (SPA Routing) โดยไม่โหลดหน้าใหม่
+function switchView(viewId) {
+    // 1. ซ่อนทุกหน้า และโชว์หน้าที่เลือก
+    document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active-view'));
+    document.getElementById(`${viewId}-view`).classList.add('active-view');
+
+    // 2. เปลี่ยนแถบ Active เมนูด้านข้าง
+    document.querySelectorAll('.sidebar-nav .nav-item').forEach(nav => nav.classList.remove('active'));
+    document.getElementById(`nav-${viewId}`).classList.add('active');
+
+    // 3. เปลี่ยนชื่อบน Topbar
+    const titleMap = { 'contacts': 'รายชื่อผู้มุ่งหวัง', 'settings': 'ตั้งค่าระบบ' };
+    document.querySelector('.topbar-title').innerText = titleMap[viewId] || '';
+
+    // 4. ปิด Sidebar ถ้าเปิดในมือถือ
+    if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+}
+// -----------------------------------------
+// 5. CORE RENDERING (V11.5: Calendar Date Range Filters)
+// -----------------------------------------
+function renderTable() {
+    const tbody = document.getElementById('contactsTableBody'); 
+    if(!tbody) return; 
+    tbody.innerHTML = '';
+    
+    if (!contactsData || contactsData.length === 0) { 
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding: 3rem; color: var(--text-muted);">ยังไม่มีรายชื่อในระบบ</td></tr>`; 
+        return; 
+    }
+
+    // --- ดึงค่าจากตัวกรองทั้งหมด ---
+    const searchText = ((document.getElementById('searchInput')?.value || '') || (document.getElementById('searchInputMobile')?.value || '')).toLowerCase();
+    const scoreMode = document.getElementById('scoreModeSel')?.value || 'FARM';
+    const checkedTypes = Array.from(document.querySelectorAll('.cb-type:checked')).map(cb => cb.value); 
+    const checkedStatuses = Array.from(document.querySelectorAll('.cb-status:checked')).map(cb => cb.value); 
+    
+    const filterAppt = document.querySelector('input[name="rad-appt"]:checked')?.value || 'all';
+    const filterScore = document.querySelector('input[name="rad-score"]:checked')?.value || 'all';
+    
+    // 🌟 ดึงค่าจากปฏิทิน (แปลงเป็นตัวเลข Time เพื่อให้เปรียบเทียบง่าย ป้องกันบั๊ก Timezone)
+    const parseLocal = (dStr) => { if(!dStr) return null; const [y, m, d] = dStr.split('-'); return new Date(y, m-1, d).getTime(); };
+    const sAppt = parseLocal(document.getElementById('filterApptStart')?.value);
+    const eAppt = parseLocal(document.getElementById('filterApptEnd')?.value);
+    const sUpd = parseLocal(document.getElementById('filterUpdateStart')?.value);
+    const eUpd = parseLocal(document.getElementById('filterUpdateEnd')?.value);
+
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    // 🌟 1. ระบบ Filter
+    let displayData = contactsData.filter(row => {
+        if(!row.PersonID) return false;
         
-        const avgScore = ((parseInt(row.Score_Active||3) + parseInt(row.Score_Friendly||3) + parseInt(row.Score_Money||3) + parseInt(row.Score_Relation||3)) / 4).toFixed(1);
+        if (currentDashboardFilter === 'appts' && (!row.Next_Appt_Date || new Date(row.Next_Appt_Date) < today)) return false;
+        if (currentDashboardFilter === 'success' && row.Current_Status !== 'ซื้อสินค้า/สมัครแล้ว') return false;
+        
+        const nameMatch = (row.Name || '').toLowerCase().includes(searchText) || (row.Phone || '').includes(searchText) || (row.Next_Appt_Topic || '').toLowerCase().includes(searchText);
+        const typeMatch = checkedTypes.length === 0 || checkedTypes.includes(row.Contact_Type);
+        const statusMatch = checkedStatuses.includes(row.Current_Status) || (checkedStatuses.length === 0 && row.Current_Status === '');
+        
+        // 🌟 1.3 กรองวันเวลานัดหมาย (รองรับทั้งแบบปฏิทิน และแบบตัวเลือกด่วน)
+        let apptMatch = true;
+        if (sAppt || eAppt) {
+            // ถ้าใช้ปฏิทิน
+            if (!row.Next_Appt_Date) { apptMatch = false; }
+            else {
+                const rowD = new Date(row.Next_Appt_Date); rowD.setHours(0,0,0,0); const rTime = rowD.getTime();
+                if (sAppt && rTime < sAppt) apptMatch = false;
+                if (eAppt && rTime > eAppt) apptMatch = false;
+            }
+        } else if (filterAppt !== 'all') {
+            // ถ้าใช้ตัวเลือกสำเร็จรูป
+            if (!row.Next_Appt_Date) { apptMatch = false; }
+            else {
+                const apptDate = new Date(row.Next_Appt_Date); apptDate.setHours(0,0,0,0);
+                const diffDays = Math.ceil((apptDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                if (filterAppt === 'overdue' && diffDays >= 0) apptMatch = false;
+                if (filterAppt === 'today' && (diffDays < 0 || diffDays > 2)) apptMatch = false;
+                if (filterAppt === 'upcoming' && (diffDays < 0 || diffDays > 7)) apptMatch = false;
+            }
+        }
+
+        // 🌟 1.4 กรองวันที่อัปเดต (ปฏิทิน)
+        let updateMatch = true;
+        if (sUpd || eUpd) {
+            if (!row.Last_Update) { updateMatch = false; }
+            else {
+                const rowU = new Date(row.Last_Update); rowU.setHours(0,0,0,0); const uTime = rowU.getTime();
+                if (sUpd && uTime < sUpd) updateMatch = false;
+                if (eUpd && uTime > eUpd) updateMatch = false;
+            }
+        }
+
+        let scoreMatch = true;
+        if (filterScore !== 'all') {
+            const currentScore = calculateScore(row, scoreMode);
+            if (filterScore === '4' && currentScore < 4) scoreMatch = false;
+            if (filterScore === '3' && currentScore < 3) scoreMatch = false;
+            if (filterScore === 'low' && currentScore >= 3) scoreMatch = false;
+        }
+
+        return nameMatch && typeMatch && statusMatch && apptMatch && updateMatch && scoreMatch;
+    });
+
+    // 🌟 2. ระบบ Sorting
+    displayData.sort((a, b) => {
+        if (currentSortCol === 'score') return currentSortDir === 'asc' ? calculateScore(a, scoreMode) - calculateScore(b, scoreMode) : calculateScore(b, scoreMode) - calculateScore(a, scoreMode);
+        else if (currentSortCol === 'appt') { 
+            const dA = a.Next_Appt_Date ? new Date(a.Next_Appt_Date).getTime() : 0; 
+            const dB = b.Next_Appt_Date ? new Date(b.Next_Appt_Date).getTime() : 0; 
+            if(dA===0 && dB!==0) return 1; if(dA!==0 && dB===0) return -1; 
+            return currentSortDir === 'asc' ? dA - dB : dB - dA; 
+        } 
+        else { 
+            const dA = a.Last_Update ? new Date(a.Last_Update).getTime() : 0; 
+            const dB = b.Last_Update ? new Date(b.Last_Update).getTime() : 0; 
+            return currentSortDir === 'asc' ? dA - dB : dB - dA; 
+        }
+    });
+
+    const totalItems = displayData.length; 
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    if (currentPage > totalPages) currentPage = totalPages; 
+    if (currentPage < 1) currentPage = 1;
+    const startIndex = (currentPage - 1) * itemsPerPage; 
+    const pageData = displayData.slice(startIndex, startIndex + itemsPerPage);
+
+    // 🌟 4. วาดแถวข้อมูล
+    pageData.forEach((row, index) => {
+        let displayAge = row.Age || ''; if (row.DOB) displayAge = calculateAge(row.DOB) || displayAge;
+        let ageOptions = '<option value="">-</option>'; for(let i=15; i<=80; i++) ageOptions += `<option value="${i}" ${row.Age == i ? 'selected':''}>${i}</option>`;
+        
+        let apptClass = '';
+        if (row.Next_Appt_Date) {
+            const apptDate = new Date(row.Next_Appt_Date); apptDate.setHours(0,0,0,0);
+            const diffDays = Math.ceil((apptDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays < 0) apptClass = 'row-overdue'; 
+            else if (diffDays >= 0 && diffDays <= 2) apptClass = 'row-today'; 
+        }
+        
+        const trMain = document.createElement('tr'); 
+        trMain.id = `row-${row.PersonID}`; 
+        trMain.className = `main-row ${apptClass}`; 
+        trMain.onclick = (e) => { if (!['SELECT','BUTTON','INPUT'].includes(e.target.tagName)) toggleExpandRow(row.PersonID); };
 
         trMain.innerHTML = `
-            <td class="col-id">${row.PersonID}</td>
-            <td class="col-name"><input type="text" class="inline-input r-name name-text" value="${row.Name}" onclick="event.stopPropagation();" onmouseenter="handleNameHover(event, '${row.PersonID}')" onmouseleave="clearNameHover()" oninput="triggerAutoSave('${row.PersonID}')" autocomplete="off"></td>
-            <td class="col-age"><input type="number" class="inline-input r-age" value="${row.Age || ''}" style="text-align: center;" onclick="event.stopPropagation();" oninput="triggerAutoSave('${row.PersonID}')"></td>
-            <td class="col-type"><div onclick="event.stopPropagation();">${generateTypeDropdownHTML(row.Contact_Type, row.PersonID)}</div></td>
-            <td class="col-rel"><input type="text" class="inline-input r-rel" value="${row.Relation_Jogger || ''}" onclick="event.stopPropagation();" oninput="triggerAutoSave('${row.PersonID}')"></td>
-            <td class="col-score"><div class="score-hover-target" onmouseenter="showStatsCard(event, '${row.PersonID}')" onmouseleave="hideStatsCard()"><span style="font-weight: 600; color: #F59E0B; font-size: 0.95rem;">⭐ ${avgScore}</span></div></td>
-            <td class="col-status"><div onclick="event.stopPropagation();">${generateStatusDropdownHTML(row.Current_Status, row.PersonID)}</div></td>
-            <td class="col-update"><div class="last-update-text">📅 ${formatDateTime(row.Last_Update)}</div></td>
-            <td class="col-action"><div class="save-status-indicator status-idle" id="status-${row.PersonID}">☁️</div></td>
+            <td style="text-align:center; color:var(--text-muted);">${startIndex + index + 1}</td>
+            <td class="col-name-cell">
+                <div class="profile-cell" style="display:flex; align-items:center; gap:12px;">
+                    <div class="avatar-circle">${(row.Name||'?').charAt(0).toUpperCase()}</div>
+                    <div class="profile-info" style="display:flex; flex-direction:column;">
+                        <span id="view-name-${row.PersonID}" class="profile-name" style="font-weight:600; color:var(--text-main);">${row.Name || 'ไม่ระบุชื่อ'}</span>
+                        <span id="view-phone-${row.PersonID}" class="profile-sub" style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">📞 ${row.Phone || '-'}</span>
+                    </div>
+                </div>
+            </td>
+            <td class="col-age" style="text-align:center;">${displayAge ? displayAge + ' ปี' : '-'}</td>
+            <td><div class="desktop-only">${generateTypeDropdownHTML(row.Contact_Type, row.PersonID)}</div></td>
+            <td>
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <input type="datetime-local" style="border:none; background:transparent; color:var(--primary); font-weight:600; cursor:pointer;" value="${toLocalDatetimeInput(row.Next_Appt_Date)}" onchange="triggerAutoSave('${row.PersonID}')">
+                    <div class="mobile-only" style="color:var(--text-muted); font-size:0.75rem;">${row.Next_Appt_Topic ? 'เรื่อง: '+row.Next_Appt_Topic : ''}</div>
+                </div>
+            </td>
+            <td class="desktop-only"><div style="color:var(--text-muted); max-width:140px; overflow:hidden; text-overflow:ellipsis;">${row.Next_Appt_Topic || '-'}</div></td>
+            <td id="view-score-${row.PersonID}" class="col-score" style="text-align:center; font-weight:600; color:#D97706;">⭐ ${calculateScore(row, scoreMode).toFixed(1)}</td>
+            <td><div class="desktop-only">${generateStatusDropdownHTML(row.Current_Status, row.PersonID)}</div></td>
+            <td class="col-update" style="font-size:0.75rem; color:var(--text-muted);">${formatDateShort(row.Last_Update)}</td>
+            <td style="text-align:center;">
+                <div class="action-menu-container">
+                    <button id="status-btn-${row.PersonID}" class="btn-icon-dots view-mode" style="width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center; padding:0; margin:0 auto;" onclick="toggleActionMenu('${row.PersonID}'); event.stopPropagation();">⋮</button>
+                    <div class="action-menu-dropdown view-mode" id="action-menu-${row.PersonID}">
+                        <button onclick="clickLeftBtn('${row.PersonID}'); event.stopPropagation();">✏️ แก้ไขข้อมูล</button>
+                        <button style="color:var(--danger);" onclick="clickRightBtn('${row.PersonID}'); event.stopPropagation();">🗑️ ลบรายชื่อ</button>
+                    </div>
+                </div>
+            </td>
         `;
         tbody.appendChild(trMain);
 
-        const pStr = row.Products_Used || ''; let productsHTML = '';
-        productList.forEach(item => {
-            const status = getProductStatus(pStr, item);
-            let btnClass = 'product-toggle-btn' + (status === 'interested' ? ' status-interested' : (status === 'used' ? ' status-used' : ''));
-            const styleStr = item === 'Workshop' ? 'grid-column: span 3;' : '';
-            productsHTML += `<button type="button" class="${btnClass}" style="${styleStr}" data-value="${item}" data-status="${status}" onclick="toggleProductStatus(this, '${row.PersonID}')">${item}</button>`;
+        const pMap = {}; (row.Products_Status||'').split(',').forEach(p => { const pT = p.split(':'); if(pT[0].trim()) pMap[pT[0].trim()] = pT[1] ? pT[1].trim() : 'none'; });
+        standardProducts.forEach(sp => { if(!pMap[sp]) pMap[sp] = 'none'; });
+        let edProducts = '';
+        Object.keys(pMap).forEach(item => {
+            const st = pMap[item]; let cls = 'skill-tag'; let ic = item;
+            if(st === 'interested') { cls += ' status-yes'; ic = '🟡 ' + item; } else if(st === 'used') { cls += ' status-teach'; ic = '✅ ' + item; }
+            edProducts += `<button type="button" class="${cls}" data-value="${item}" data-status="${st}" onclick="toggleModalProduct(this, '${row.PersonID}', event)"><span>${ic}</span> <span class="tag-remove" onclick="removeTag(this, '${row.PersonID}', event)">✕</span></button>`;
         });
 
-        const trDrawer = document.createElement('tr'); trDrawer.id = `drawer-${row.PersonID}`; trDrawer.className = 'expanded-row';
+        let skData = {}; try { skData = JSON.parse(row.Personal_Skill || "{}"); } catch(e){}
+        let allSk = [...skillList]; Object.keys(skData).forEach(k => { if(!allSk.includes(k)) allSk.push(k); });
+        let edSkills = '';
+        allSk.forEach(sk => {
+            const val = skData[sk] || 'no'; let cls = 'skill-tag'; let ic = sk;
+            if(val === 'yes') { cls += ' status-yes'; ic = '🟡 ' + sk; } else if(val === 'teach') { cls += ' status-teach'; ic = '✅ ' + sk; }
+            edSkills += `<button type="button" class="${cls}" data-skill="${sk}" data-val="${val}" onclick="toggleModalSkill(this, '${row.PersonID}', event)"><span>${ic}</span> <span class="tag-remove" onclick="removeTag(this, '${row.PersonID}', event)">✕</span></button>`;
+        });
+
+        const trDrawer = document.createElement('tr'); 
+        trDrawer.id = `drawer-${row.PersonID}`; 
+        trDrawer.className = 'expanded-row';
         trDrawer.innerHTML = `
-            <td colspan="9" style="padding: 0; border: none;">
-                <div class="expanded-content">
-                    <div class="drawer-layout">
-                        <div class="drawer-left">
-                            <div class="e-group"><label class="e-label">ABO #</label><input type="text" class="e-input ex-abo" value="${row.ABO_Number || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
-                            <div class="e-group"><label class="e-label">EXPIRED</label><input type="date" class="e-input ex-expire" value="${row.Expire_Date ? row.Expire_Date.substring(0,10) : ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
-                            <div class="e-group"><label class="e-label">ID</label><input type="text" class="e-input" value="${row.PersonID}" disabled style="background:var(--bg-color);"></div>
-                            <div class="e-group"><label class="e-label">DOB (DD/MM/YY)</label><input type="date" class="e-input ex-dob" value="${row.DOB ? row.DOB.substring(0,10) : ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
-                            <div class="e-group"><label class="e-label">Tel</label><input type="text" class="e-input ex-phone" value="${row.Phone || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
-                            <div class="e-group"><label class="e-label">Mail</label><input type="email" class="e-input ex-email" value="${row.Email || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
-                            <div class="e-group dl-full"><label class="e-label">Address</label><input type="text" class="e-input ex-address" value="${row.Address || ''}" placeholder="ที่อยู่จัดส่ง..." oninput="triggerAutoSave('${row.PersonID}')"></div>
-                            <div class="e-group dl-full" style="margin-top: 0.5rem;">
-                                <label class="e-label">📊 วิเคราะห์ศักยภาพ (STATS) <span class="info-hint" title="A = กระตือรือร้น (Active)&#10;F = มนุษยสัมพันธ์ (Friendly)&#10;M = กำลังซื้อ (Money)&#10;R = ความสนิทสนม (Relation)">ℹ️</span></label>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 0.8rem;">
-                                    <div class="rpg-stat-group"><span class="rpg-stat-label">A</span>${generateRPGStarSelect(row.Score_Active||3, 'ex-score-a', row.PersonID)}</div>
-                                    <div class="rpg-stat-group"><span class="rpg-stat-label">F</span>${generateRPGStarSelect(row.Score_Friendly||3, 'ex-score-f', row.PersonID)}</div>
-                                    <div class="rpg-stat-group"><span class="rpg-stat-label">M</span>${generateRPGStarSelect(row.Score_Money||3, 'ex-score-m', row.PersonID)}</div>
-                                    <div class="rpg-stat-group"><span class="rpg-stat-label">R</span>${generateRPGStarSelect(row.Score_Relation||3, 'ex-score-r', row.PersonID)}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="drawer-right">
-                            <label class="e-label">🛒 เช็คลิสต์สินค้า (คลิก 1=สนใจ, คลิก 2=ใช้แล้ว)</label>
-                            <div class="d-checklist ex-products">${productsHTML}</div>
-                            <label class="e-label">NOTE:</label>
-                            <textarea class="e-input ex-note" style="height: 100%; min-height: 150px;" oninput="triggerAutoSave('${row.PersonID}')">${row.Note || ''}</textarea>
+            <td colspan="10" style="padding: 0; border: none;">
+                <div class="drawer-container crm-drawer">
+                    <div class="drawer-header-actions">
+                        <div class="drawer-title" style="font-weight:700; color:var(--primary);">📄 รายละเอียดเคส (Profile)</div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-outline" id="btn-left-${row.PersonID}" onclick="clickLeftBtn('${row.PersonID}')">✏️ แก้ไข</button>
+                            <button class="btn btn-outline" id="btn-right-${row.PersonID}" style="color:var(--danger); border-color:#FCA5A5;" onclick="clickRightBtn('${row.PersonID}')">🗑️ ลบ</button>
                         </div>
                     </div>
-                    <div class="e-footer"><div style="display: flex; justify-content: flex-end; width: 100%;"><button class="btn-danger" onclick="deleteContact('${row.PersonID}')">🗑️ ลบรายชื่อ</button></div></div>
+                    <div class="crm-grid">
+                        <div class="crm-box box-info">
+                            <div class="crm-section-title">👤 ข้อมูลพื้นฐาน</div>
+                            <div class="seamless-row"><span class="seamless-label">ชื่อเต็ม:</span> <input type="text" class="seamless-input ex-name" value="${row.Name || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
+                            <div class="seamless-row"><span class="seamless-label">เบอร์โทร:</span> <input type="text" class="seamless-input ex-phone" value="${row.Phone || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
+                            <div class="seamless-row"><span class="seamless-label">สายสัมพันธ์:</span> <input type="text" class="seamless-input ex-rel" value="${row.Relation_Jogger || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
+                            <div class="seamless-row"><span class="seamless-label">อายุ:</span> <select class="seamless-input ex-age" onchange="triggerAutoSave('${row.PersonID}')">${ageOptions}</select></div>
+                        </div>
+                        <div class="crm-box box-system">
+                            <div class="crm-section-title">📋 ข้อมูลระบบ</div>
+                            <div class="seamless-row"><span class="seamless-label">รหัสสมาชิก:</span> <input type="text" class="seamless-input ex-abo" value="${row.ABO_Number || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
+                            <div class="seamless-row"><span class="seamless-label">วันเกิด:</span> <input type="date" class="seamless-input ex-dob" value="${row.DOB ? row.DOB.substring(0,10) : ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
+                            <div class="seamless-row"><span class="seamless-label">หมดอายุ:</span> <input type="date" class="seamless-input ex-expire" value="${row.Expire_Date ? row.Expire_Date.substring(0,10) : ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
+                        </div>
+                        <div class="crm-box box-product">
+                            <div class="crm-section-title" style="position: relative;">🛒 สินค้า <span class="hint-icon" onclick="toggleHint(event, 'hint-prod-${row.PersonID}')">💡</span><div class="hint-popup" id="hint-prod-${row.PersonID}"><div style="display:flex; gap:8px; flex-wrap:wrap; line-height:1.4;"><span><span class="hint-dot gray"></span>ยังไม่เสนอ</span> | <span>🟡 สนใจ</span> | <span>✅ ใช้แล้ว</span></div></div></div>
+                            <div class="skill-checklist ex-products-edit" id="prod-list-${row.PersonID}">${edProducts}</div>
+                            <div class="add-tag-group"><input type="text" id="add-prod-${row.PersonID}" class="e-input" style="flex:1; padding:6px; font-size:0.85rem;" placeholder="+ เพิ่มสินค้า..." onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomTag('${row.PersonID}','product');}"><button class="btn btn-primary" onclick="addCustomTag('${row.PersonID}','product')">เพิ่ม</button></div>
+                        </div>
+                        <div class="crm-box box-skill">
+                            <div class="crm-section-title" style="position: relative;">🎓 ทักษะพื้นฐาน <span class="hint-icon" onclick="toggleHint(event, 'hint-skill-${row.PersonID}')">💡</span><div class="hint-popup" id="hint-skill-${row.PersonID}"><div style="display:flex; gap:8px; flex-wrap:wrap; line-height:1.4;"><span><span class="hint-dot gray"></span>ยังไม่เรียน</span> | <span>🟡 เรียนแล้ว</span> | <span>✅ ถ่ายทอดได้</span></div></div></div>
+                            <div class="skill-checklist ex-skills-edit" id="skill-list-${row.PersonID}">${edSkills}</div>
+                            <div class="add-tag-group"><input type="text" id="add-skill-${row.PersonID}" class="e-input" style="flex:1; padding:6px; font-size:0.85rem;" placeholder="+ เพิ่มทักษะ..." onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomTag('${row.PersonID}','skill');}"><button class="btn btn-primary" onclick="addCustomTag('${row.PersonID}','skill')">เพิ่ม</button></div>
+                        </div>
+                        <div class="crm-box box-followup" style="background:#FEF3C7; border-color:#FDE047;">
+                            <div class="crm-section-title" style="color:#A16207;">🗓️ การติดตามผล</div>
+                            <div class="seamless-row"><span class="seamless-label" style="color:#92400E;">วันเวลานัด:</span> <input type="datetime-local" class="seamless-input ex-appt-date" style="color:var(--primary);" value="${toLocalDatetimeInput(row.Next_Appt_Date)}" oninput="triggerAutoSave('${row.PersonID}')"></div>
+                            <div class="seamless-row"><span class="seamless-label" style="color:#92400E;">เรื่องที่นัด:</span> <input type="text" class="seamless-input ex-appt-topic" value="${row.Next_Appt_Topic || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
+                            <div class="seamless-row" style="flex-direction:column; align-items:flex-start;"><span class="seamless-label" style="color:#92400E; margin-bottom:4px;">📌 Note สั้นๆ:</span> <input type="text" class="seamless-input ex-status-note" style="width:100%; text-align:left;" value="${row.Status_Note || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
+                        </div>
+                        <div class="crm-box box-farm">
+                            <div class="crm-section-title" style="position: relative;">
+                                📊 วิเคราะห์ศักยภาพ <span class="hint-icon" onclick="toggleHint(event, 'hint-farm-${row.PersonID}')">💡</span>
+                                <div class="hint-popup" id="hint-farm-${row.PersonID}" style="line-height: 1.6; text-align: left; min-width: 180px;">
+                                    <div style="font-weight: 600; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px dashed rgba(255,255,255,0.2);">⭐ ประเมิน 1-5 ดาว</div>
+                                    F = Friendly (อัธยาศัย)<br>A = Active (ขยัน)<br>R = Relation (สัมพันธ์)<br>M = Money (กำลังซื้อ)<br>Au = Authority (อำนาจ)<br>N = Need (ความต้องการ)
+                                </div>
+                            </div>
+                            <div class="seamless-row" style="border:none; margin-bottom:0; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+                                <span class="seamless-label">F อัธยาศัย</span> <select class="seamless-input ex-score-f" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;" onchange="triggerAutoSave('${row.PersonID}')">${getStarOptions(row.Score_Friendly)}</select>
+                            </div>
+                            <div class="seamless-row" style="border:none; margin-bottom:0; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+                                <span class="seamless-label">A ขยัน</span> <select class="seamless-input ex-score-a" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;" onchange="triggerAutoSave('${row.PersonID}')">${getStarOptions(row.Score_Active)}</select>
+                            </div>
+                            <div class="seamless-row" style="border:none; margin-bottom:0; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+                                <span class="seamless-label">R สัมพันธ์</span> <select class="seamless-input ex-score-r" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;" onchange="triggerAutoSave('${row.PersonID}')">${getStarOptions(row.Score_Relation)}</select>
+                            </div>
+                            <div class="seamless-row" style="border:none; margin-bottom:0; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+                                <span class="seamless-label">M กำลังซื้อ</span> <select class="seamless-input ex-score-m" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;" onchange="triggerAutoSave('${row.PersonID}')">${getStarOptions(row.Score_Money)}</select>
+                            </div>
+                            <div class="seamless-row" style="border:none; margin-bottom:0; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+                                <span class="seamless-label">Au อำนาจ</span> <select class="seamless-input ex-score-au" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;" onchange="triggerAutoSave('${row.PersonID}')">${getStarOptions(row.Score_Authority)}</select>
+                            </div>
+                            <div class="seamless-row" style="border:none; margin-bottom:0; padding-bottom:0; display:flex; justify-content:space-between; align-items:center;">
+                                <span class="seamless-label">N ปัญหา</span> <select class="seamless-input ex-score-n" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;" onchange="triggerAutoSave('${row.PersonID}')">${getStarOptions(row.Score_Need)}</select>
+                            </div>
+                        </div>
+                        <div class="crm-box box-note full-width">
+                            <div class="crm-section-title">📝 STORY & NOTE</div>
+                            <textarea class="seamless-input seamless-textarea ex-note" oninput="triggerAutoSave('${row.PersonID}')">${row.Note || defaultNote}</textarea>
+                        </div>
+                    </div>
                 </div>
             </td>
         `;
         tbody.appendChild(trDrawer);
     });
-    filterTable();
-}
 
-function toggleExpandRow(id) {
-    const trMain = document.getElementById(`row-${id}`); const trDrawer = document.getElementById(`drawer-${id}`);
-    if (trMain.classList.contains('row-expanded')) { trMain.classList.remove('row-expanded'); trDrawer.classList.remove('open'); } 
-    else {
-        document.querySelectorAll('.row-expanded').forEach(r => r.classList.remove('row-expanded'));
-        document.querySelectorAll('.expanded-row.open').forEach(r => r.classList.remove('open'));
-        trMain.classList.add('row-expanded'); trDrawer.classList.add('open');
+    if (currentExpandedId) {
+        const trMain = document.getElementById(`row-${currentExpandedId}`);
+        const trDrawer = document.getElementById(`drawer-${currentExpandedId}`);
+        if (trMain && trDrawer) {
+            trMain.classList.add('row-expanded'); trDrawer.classList.add('open');
+            if (trDrawer.querySelector('.drawer-container')) trDrawer.querySelector('.drawer-container').classList.add('drawer-expand');
+            if (currentEditingId === currentExpandedId) trDrawer.classList.add('is-editing');
+        }
+    }
+
+    const paginationFooter = document.querySelector('.pagination-footer');
+    if (paginationFooter) {
+        let pageBtns = '';
+        let startP = Math.max(1, currentPage - 2);
+        let endP = Math.min(totalPages, currentPage + 2);
+        
+        if(startP > 1) pageBtns += `<button class="btn btn-outline btn-page" onclick="goToPage(1)">1</button>${startP > 2 ? '<span style="padding:0 4px;">...</span>' : ''}`;
+        for(let i=startP; i<=endP; i++) {
+            pageBtns += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline'} btn-page" onclick="goToPage(${i})">${i}</button>`;
+        }
+        if(endP < totalPages) pageBtns += `${endP < totalPages - 1 ? '<span style="padding:0 4px;">...</span>' : ''}<button class="btn btn-outline btn-page" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+
+        paginationFooter.innerHTML = `
+            <div style="display:flex; align-items:center; gap:16px;">
+                <span class="page-info">รวม <strong style="color:var(--primary);">${totalItems}</strong> รายการ</span>
+                <select class="e-input" style="padding:4px 8px; font-size:0.8rem; cursor:pointer;" onchange="changeItemsPerPage(this.value)">
+                    <option value="10" ${itemsPerPage===10?'selected':''}>โชว์ 10 แถว</option>
+                    <option value="20" ${itemsPerPage===20?'selected':''}>โชว์ 20 แถว</option>
+                    <option value="50" ${itemsPerPage===50?'selected':''}>โชว์ 50 แถว</option>
+                    <option value="100" ${itemsPerPage===100?'selected':''}>โชว์ 100 แถว</option>
+                </select>
+            </div>
+            <div class="pagination-container" style="display:flex; gap:5px; align-items:center;">
+                <button class="btn btn-outline btn-page" onclick="changePage(-1)" ${currentPage===1?'disabled':''}>&laquo;</button>
+                ${pageBtns}
+                <button class="btn btn-outline btn-page" onclick="changePage(1)" ${currentPage===totalPages?'disabled':''}>&raquo;</button>
+            </div>
+        `;
     }
 }
 
-// Auto-Save
-function triggerAutoSave(personID) {
-    const statusIndicator = document.getElementById(`status-${personID}`);
-    if (autoSaveTimers[personID]) clearTimeout(autoSaveTimers[personID]);
-    statusIndicator.className = 'save-status-indicator status-saving'; statusIndicator.innerHTML = '✍️...';
-    autoSaveTimers[personID] = setTimeout(() => { executeAutoSave(personID); }, 1500);
+// -----------------------------------------
+// 6. AUTO-SAVE & API ACTIONS
+// -----------------------------------------
+function updateSelectColor(el, kind, id) { 
+    el.className = `colored-select ${kind === 'type' ? getTypeColorClass(el.value) : getStatusColorClass(el.value)}`; 
+    triggerAutoSave(id); 
+}
+
+function toggleModalProduct(btn, id, e) { 
+    if(e && e.target.classList.contains('tag-remove')) return; 
+    let s = btn.dataset.status; let val = btn.dataset.value; let ic = val;
+    if(s === 'none') { btn.dataset.status = 'interested'; btn.className = 'skill-tag status-yes'; ic = '🟡 ' + val; } 
+    else if(s === 'interested') { btn.dataset.status = 'used'; btn.className = 'skill-tag status-teach'; ic = '✅ ' + val; } 
+    else { btn.dataset.status = 'none'; btn.className = 'skill-tag'; ic = val; } 
+    btn.innerHTML = `<span>${ic}</span> <span class="tag-remove" onclick="removeTag(this, '${id}', event)">✕</span>`;
+    triggerAutoSave(id); 
+}
+
+function toggleModalSkill(btn, id, e) { 
+    if(e && e.target.classList.contains('tag-remove')) return; 
+    let v = btn.dataset.val; let skill = btn.dataset.skill; let ic = skill;
+    if(v === 'no') { btn.dataset.val = 'yes'; btn.className = 'skill-tag status-yes'; ic = '🟡 ' + skill; } 
+    else if(v === 'yes') { btn.dataset.val = 'teach'; btn.className = 'skill-tag status-teach'; ic = '✅ ' + skill; } 
+    else { btn.dataset.val = 'no'; btn.className = 'skill-tag'; ic = skill; } 
+    btn.innerHTML = `<span>${ic}</span> <span class="tag-remove" onclick="removeTag(this, '${id}', event)">✕</span>`;
+    triggerAutoSave(id); 
+}
+
+function removeTag(element, id, e) {
+    e.stopPropagation(); element.closest('.skill-tag').remove(); triggerAutoSave(id); 
+}
+
+function addCustomTag(id, type) {
+    const inputEl = document.getElementById(type === 'product' ? `add-prod-${id}` : `add-skill-${id}`);
+    const val = inputEl.value.trim(); if(!val) return; 
+    const listEl = document.getElementById(type === 'product' ? `prod-list-${id}` : `skill-list-${id}`);
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'skill-tag'; 
+    if (type === 'product') { btn.dataset.value = val; btn.dataset.status = 'none'; btn.onclick = (e) => toggleModalProduct(btn, id, e); } 
+    else { btn.dataset.skill = val; btn.dataset.val = 'no'; btn.onclick = (e) => toggleModalSkill(btn, id, e); }
+    btn.innerHTML = `<span>${val}</span> <span class="tag-remove" onclick="removeTag(this, '${id}', event)">✕</span>`;
+    listEl.appendChild(btn); inputEl.value = ''; triggerAutoSave(id); inputEl.focus();
+}
+
+function triggerAutoSave(personID) { 
+    const btn = document.getElementById(`status-btn-${personID}`); 
+    const menu = document.getElementById(`action-menu-${personID}`);
+    if (autoSaveTimers[personID]) clearTimeout(autoSaveTimers[personID]); 
+    if(btn) { btn.innerHTML = '⏳'; btn.style.pointerEvents = 'none'; if(menu) menu.classList.remove('show'); }
+    autoSaveTimers[personID] = setTimeout(() => { executeAutoSave(personID); }, 1000); 
 }
 
 async function executeAutoSave(id) {
-    const trMain = document.getElementById(`row-${id}`); const trDrawer = document.getElementById(`drawer-${id}`);
-    const statusIndicator = document.getElementById(`status-${id}`); statusIndicator.innerHTML = '⏳';
-    
-    const person = contactsData.find(p => p.PersonID === id);
-    let selectedProducts = [];
-    trDrawer.querySelectorAll('.ex-products .product-toggle-btn').forEach(btn => { if (btn.dataset.status !== 'none') selectedProducts.push(`${btn.dataset.value}:${btn.dataset.status}`); });
-
-    const currentStatus = trMain.querySelector('.r-status').value;
-    let finalUpdateDate = person.Last_Update;
-    if (currentStatus !== person.Current_Status) finalUpdateDate = new Date().toISOString();
-
-    const payloadData = {
-        PersonID: id, Name: trMain.querySelector('.r-name').value, Age: trMain.querySelector('.r-age').value,
-        Contact_Type: trMain.querySelector('.r-type').value, Relation_Jogger: trMain.querySelector('.r-rel').value, Current_Status: currentStatus,
-        Score_Active: trDrawer.querySelector('.ex-score-a').value, Score_Friendly: trDrawer.querySelector('.ex-score-f').value,
-        Score_Money: trDrawer.querySelector('.ex-score-m').value, Score_Relation: trDrawer.querySelector('.ex-score-r').value,
-        ABO_Number: trDrawer.querySelector('.ex-abo').value, Expire_Date: trDrawer.querySelector('.ex-expire').value,
-        DOB: trDrawer.querySelector('.ex-dob').value, Phone: trDrawer.querySelector('.ex-phone').value,
-        Email: trDrawer.querySelector('.ex-email').value, Address: trDrawer.querySelector('.ex-address').value,
-        Note: trDrawer.querySelector('.ex-note').value, Products_Used: selectedProducts.join(','), Last_Update: finalUpdateDate
+    const trMain = document.getElementById(`row-${id}`); 
+    const trDrawer = document.getElementById(`drawer-${id}`);
+    const setStatus = (icon, lock = false, resetAfter = 0) => {
+        const btn = document.getElementById(`status-btn-${id}`);
+        if (btn) { btn.innerHTML = icon; btn.style.pointerEvents = lock ? 'none' : 'auto'; }
+        if (resetAfter > 0) setTimeout(() => { const resetBtn = document.getElementById(`status-btn-${id}`); if (resetBtn) { resetBtn.innerHTML = '⋮'; resetBtn.style.pointerEvents = 'auto'; } }, resetAfter);
     };
 
+    setStatus('⏳', true); 
+    const person = contactsData.find(p => p.PersonID === id); 
+    if (!person) { setStatus('❌', false, 2000); return; }
+    
+    const payloadData = { ...person };
+
+    if (trMain) {
+        const selects = trMain.querySelectorAll('.colored-select');
+        if(selects[0]) payloadData.Contact_Type = selects[0].value;
+        if(selects[1]) payloadData.Current_Status = selects[1].value;
+        const mainDate = trMain.querySelector('input[type="datetime-local"]');
+        if(mainDate) payloadData.Next_Appt_Date = mainDate.value;
+    }
+    
+    if (trDrawer && trDrawer.classList.contains('is-editing')) {
+        payloadData.Name = trDrawer.querySelector('.ex-name')?.value || payloadData.Name;
+        payloadData.Phone = trDrawer.querySelector('.ex-phone')?.value || payloadData.Phone;
+        payloadData.Relation_Jogger = trDrawer.querySelector('.ex-rel')?.value || payloadData.Relation_Jogger;
+        payloadData.Age = trDrawer.querySelector('.ex-age')?.value || payloadData.Age;
+        payloadData.ABO_Number = trDrawer.querySelector('.ex-abo')?.value || payloadData.ABO_Number;
+        payloadData.DOB = trDrawer.querySelector('.ex-dob')?.value || payloadData.DOB;
+        payloadData.Expire_Date = trDrawer.querySelector('.ex-expire')?.value || payloadData.Expire_Date;
+        payloadData.Next_Appt_Date = trDrawer.querySelector('.ex-appt-date')?.value || payloadData.Next_Appt_Date;
+        payloadData.Next_Appt_Topic = trDrawer.querySelector('.ex-appt-topic')?.value || payloadData.Next_Appt_Topic;
+        payloadData.Status_Note = trDrawer.querySelector('.ex-status-note')?.value || payloadData.Status_Note;
+        payloadData.Score_Money = trDrawer.querySelector('.ex-score-m')?.value || payloadData.Score_Money;
+        payloadData.Score_Friendly = trDrawer.querySelector('.ex-score-f')?.value || payloadData.Score_Friendly;
+        payloadData.Score_Authority = trDrawer.querySelector('.ex-score-au')?.value || payloadData.Score_Authority;
+        payloadData.Score_Active = trDrawer.querySelector('.ex-score-a')?.value || payloadData.Score_Active;
+        payloadData.Score_Need = trDrawer.querySelector('.ex-score-n')?.value || payloadData.Score_Need;
+        payloadData.Score_Relation = trDrawer.querySelector('.ex-score-r')?.value || payloadData.Score_Relation;
+        
+        let pArr = []; 
+        trDrawer.querySelectorAll('.ex-products-edit .skill-tag').forEach(b => { 
+            if (b.dataset.status !== 'none' || !standardProducts.includes(b.dataset.value)) pArr.push(`${b.dataset.value}:${b.dataset.status}`); 
+        });
+        payloadData.Products_Status = pArr.join(',');
+        
+        let skObj = {}; 
+        trDrawer.querySelectorAll('.ex-skills-edit .skill-tag').forEach(b => { skObj[b.dataset.skill] = b.dataset.val; });
+        payloadData.Personal_Skill = JSON.stringify(skObj);
+        payloadData.Note = trDrawer.querySelector('.ex-note')?.value || payloadData.Note;
+    }
+
+    payloadData.Last_Update = new Date().toISOString();
+    
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'UPDATE', sheet: "Contacts_Master", id: id, data: payloadData }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         const result = await response.json();
         if (result.status === "success") {
-            const index = contactsData.findIndex(p => p.PersonID === id); if (index > -1) contactsData[index] = payloadData;
-            statusIndicator.className = 'save-status-indicator status-success'; statusIndicator.innerHTML = '✅';
-            const avgScore = ((parseInt(payloadData.Score_Active) + parseInt(payloadData.Score_Friendly) + parseInt(payloadData.Score_Money) + parseInt(payloadData.Score_Relation)) / 4).toFixed(1);
-            trMain.querySelector('.col-score span').innerText = `⭐ ${avgScore}`;
-            trMain.querySelector('.last-update-text').innerHTML = `📅 ${formatDateTime(payloadData.Last_Update)}`;
-            trMain.querySelector('.last-update-text').style.color = 'var(--text-muted)';
-            setTimeout(() => { statusIndicator.className = 'save-status-indicator status-idle'; statusIndicator.innerHTML = '☁️'; }, 2000);
-        } else { statusIndicator.className = 'save-status-indicator status-error'; statusIndicator.innerHTML = '❌'; }
-    } catch (error) { statusIndicator.className = 'save-status-indicator status-error'; statusIndicator.innerHTML = '❌'; }
+            const index = contactsData.findIndex(p => p.PersonID === id); 
+            if (index > -1) contactsData[index] = payloadData;
+            localStorage.setItem('buzzGuideContacts', JSON.stringify(contactsData)); 
+            setStatus('✅', false, 2000); syncMainRow(id); updateDashboard();
+        } else { setStatus('❌', false, 2000); }
+    } catch (error) { setStatus('❌', false, 2000); }
 }
 
-function deleteContact(id) {
-    if(!confirm('ลบรายชื่อนี้?')) return;
-    document.getElementById(`row-${id}`).style.opacity = '0.5';
+function syncMainRow(id) {
+    const trDrawer = document.getElementById(`drawer-${id}`);
+    if(!trDrawer) return;
+    const viewName = document.getElementById(`view-name-${id}`);
+    const viewPhone = document.getElementById(`view-phone-${id}`);
+    const viewScore = document.getElementById(`view-score-${id}`);
+    
+    if (viewName) viewName.innerText = trDrawer.querySelector('.ex-name')?.value || 'ไม่ระบุชื่อ';
+    if (viewPhone) viewPhone.innerText = `📞 ${trDrawer.querySelector('.ex-phone')?.value || '-'}`;
+    if (viewScore) {
+        let total = (parseInt(trDrawer.querySelector('.ex-score-f')?.value||0) + parseInt(trDrawer.querySelector('.ex-score-a')?.value||0) + parseInt(trDrawer.querySelector('.ex-score-r')?.value||0) + parseInt(trDrawer.querySelector('.ex-score-m')?.value||0) + parseInt(trDrawer.querySelector('.ex-score-au')?.value||0) + parseInt(trDrawer.querySelector('.ex-score-n')?.value||0)) / 6;
+        viewScore.innerText = `⭐ ${total.toFixed(1)}`;
+    }
+}
+
+// -----------------------------------------
+// 7. MENUS, MODALS & DELETE
+// -----------------------------------------
+// 🌟 ฟังก์ชันเปิดเมนูกรอง (อัปเกรดระบบ Smart Positioning ป้องกันกล่องล้นจอ)
+function showFilterMenu(id, element) { 
+    const pop = document.getElementById(id); 
+    const isVisible = pop.style.display === 'flex'; 
+    
+    // ปิดกล่องอื่นๆ ที่เปิดอยู่
+    document.querySelectorAll('.filter-popover').forEach(el => el.style.display = 'none'); 
+    
+    if (!isVisible && element) { 
+        document.body.appendChild(pop); 
+        
+        // 1. สั่งให้แสดงผลก่อน เพื่อให้เบราว์เซอร์คำนวณความกว้าง (Width) ของกล่องได้
+        pop.style.display = 'flex'; 
+        
+        const rect = element.getBoundingClientRect(); 
+        const popWidth = pop.offsetWidth;
+        const windowWidth = window.innerWidth;
+
+        // 2. กำหนดตำแหน่งแนวตั้ง (Top)
+        pop.style.top = (rect.bottom + 10) + 'px'; 
+        
+        // 3. 🌟 คำนวณแนวนอน (Left) อัจฉริยะ
+        let leftPos = rect.left;
+        
+        // ถ้าวางปกติแล้ว "ล้นขอบขวาจอ" -> ให้สลับมาจับชิดขอบขวาของปุ่มแทน
+        if (leftPos + popWidth > windowWidth - 20) {
+            leftPos = rect.right - popWidth;
+        }
+        
+        // กันเหนียวสำหรับหน้าจอมือถือที่เล็กมากๆ (ไม่ให้ทะลุขอบซ้าย)
+        if (leftPos < 10) {
+            leftPos = 10;
+        }
+
+        pop.style.left = leftPos + 'px'; 
+    } 
+}
+
+document.addEventListener('click', function(e) { 
+    if (!e.target.closest('.th-interactive') && !e.target.closest('.filter-popover')) document.querySelectorAll('.filter-popover').forEach(el => el.style.display = 'none'); 
+    if (!e.target.closest('.action-menu-container')) document.querySelectorAll('.action-menu-dropdown').forEach(el => el.classList.remove('show')); 
+});
+
+function toggleActionMenu(id) {
+    document.querySelectorAll('.action-menu-dropdown').forEach(el => { if(el.id !== `action-menu-${id}`) el.classList.remove('show'); });
+    document.getElementById(`action-menu-${id}`).classList.toggle('show');
+}
+
+function clickLeftBtn(id) {
+    if (currentExpandedId !== id) toggleExpandRow(id);
+    const menu = document.getElementById(`action-menu-${id}`); if(menu) menu.classList.remove('show');
+    const btnLeft = document.getElementById(`btn-left-${id}`); const btnRight = document.getElementById(`btn-right-${id}`);
+    
+    if (btnLeft.innerText.includes('แก้ไข')) {
+        document.getElementById(`drawer-${id}`).classList.add('is-editing'); currentEditingId = id;
+        btnLeft.style.transform = 'scale(0)'; btnLeft.style.opacity = '0'; setTimeout(() => btnLeft.style.display = 'none', 300);
+        morphBtn(btnRight, '✅ บันทึก', 'btn btn-primary btn-save-glow', 'white', 'transparent');
+    } else if (btnLeft.innerText.includes('ยืนยัน')) deleteContact(id);
+}
+
+function clickRightBtn(id) {
+    if (currentExpandedId !== id) toggleExpandRow(id);
+    const menu = document.getElementById(`action-menu-${id}`); if(menu) menu.classList.remove('show');
+    const btnLeft = document.getElementById(`btn-left-${id}`); const btnRight = document.getElementById(`btn-right-${id}`);
+    
+    if (btnRight.innerText.includes('ลบ')) {
+        btnLeft.style.display = 'inline-flex'; btnLeft.style.transform = 'scale(0.7)'; btnLeft.style.opacity = '0';
+        setTimeout(() => { morphBtn(btnLeft, '⚠️ ยืนยัน', 'btn btn-danger'); }, 10);
+        morphBtn(btnRight, '❌ ยกเลิก', 'btn btn-outline', 'var(--text-muted)', 'var(--border-color)');
+    } else if (btnRight.innerText.includes('บันทึก')) {
+        if (autoSaveTimers[id]) { clearTimeout(autoSaveTimers[id]); autoSaveTimers[id] = null; }
+        executeAutoSave(id); 
+        const drawer = document.getElementById(`drawer-${id}`); if(drawer) drawer.classList.remove('is-editing'); currentEditingId = null;
+        btnRight.innerHTML = '⏳ กำลังบันทึก...'; btnRight.className = 'btn btn-primary'; btnRight.style.pointerEvents = 'none'; btnRight.style.transform = 'scale(0.95)'; 
+        btnLeft.style.transform = 'scale(0)'; btnLeft.style.opacity = '0'; setTimeout(() => { btnLeft.style.display = 'none'; }, 300);
+        setTimeout(() => { btnLeft.style.display = 'inline-flex'; morphBtn(btnLeft, '✏️ แก้ไข', 'btn btn-outline'); morphBtn(btnRight, '🗑️ ลบ', 'btn btn-outline', 'var(--danger)', '#FCA5A5'); btnRight.style.pointerEvents = 'auto'; }, 800);
+    } else if (btnRight.innerText.includes('ยกเลิก')) {
+        morphBtn(btnLeft, '✏️ แก้ไข', 'btn btn-outline'); morphBtn(btnRight, '🗑️ ลบ', 'btn btn-outline', 'var(--danger)', '#FCA5A5');
+    }
+}
+
+function toggleExpandRow(id) { 
+    if (currentExpandedId === id) {
+        const drawer = document.getElementById(`drawer-${id}`); const container = drawer.querySelector('.drawer-container');
+        container.classList.remove('drawer-expand'); 
+        setTimeout(() => { document.getElementById(`row-${id}`).classList.remove('row-expanded'); drawer.classList.remove('open'); drawer.classList.remove('is-editing'); currentExpandedId = null; currentEditingId = null; }, 350); 
+    } else {
+        if (currentExpandedId) {
+            const oldDrawer = document.getElementById(`drawer-${currentExpandedId}`);
+            if(oldDrawer) { const oldContainer = oldDrawer.querySelector('.drawer-container'); if(oldContainer) oldContainer.classList.remove('drawer-expand'); const oldId = currentExpandedId; setTimeout(() => { document.getElementById(`row-${oldId}`)?.classList.remove('row-expanded'); oldDrawer.classList.remove('open'); oldDrawer.classList.remove('is-editing'); }, 350); }
+        }
+        document.getElementById(`row-${id}`).classList.add('row-expanded'); const drawer = document.getElementById(`drawer-${id}`); drawer.classList.add('open');
+        setTimeout(() => { drawer.querySelector('.drawer-container').classList.add('drawer-expand'); }, 10);
+        currentExpandedId = id; currentEditingId = null;
+    }
+}
+
+function openAddModal() { document.getElementById('addContactForm').reset(); document.getElementById('addContactModal').classList.add('open'); }
+function closeAddModal() { document.getElementById('addContactModal').classList.remove('open'); }
+
+// 🌟 ฟังก์ชันบันทึกรายชื่อใหม่ (อัปเกรด V11.4)
+async function submitNewContact(e) { 
+    e.preventDefault(); 
+    
+    // 1. เปลี่ยนสถานะปุ่มเป็นกำลังโหลด
+    const btn = document.getElementById('btnAddSubmit'); 
+    btn.disabled = true; 
+    btn.innerHTML = '⏳ กำลังบันทึก...'; 
+    
+    // 2. หา ID ล่าสุด
+    let maxId = 0; 
+    contactsData.forEach(p => { 
+        const num = parseInt((p.PersonID || '').replace('N', '')); 
+        if (!isNaN(num) && num > maxId) maxId = num; 
+    }); 
+    const newId = 'N' + String(maxId + 1).padStart(4, '0'); 
+    const now = new Date().toISOString(); 
+    
+    // 3. จัดเตรียมข้อมูล (ดึงจาก Modal)
+    const newContact = { 
+        PersonID: newId, 
+        Name: document.getElementById('addName').value.trim(), 
+        Phone: document.getElementById('addPhone').value.trim(), 
+        Contact_Type: document.getElementById('addType').value, 
+        Current_Status: document.getElementById('addStatus').value, 
+        Relation_Jogger: '', 
+        Score_Active: 3, Score_Friendly: 3, Score_Money: 3, Score_Relation: 3, Score_Authority: 3, Score_Need: 3, 
+        Note: document.getElementById('addNote').value.trim() || defaultNote,
+        Date_Added: now, 
+        Last_Update: now, 
+        isNewData: true 
+    }; 
+    
+    // 4. ส่งข้อมูลเข้า API
+    try { 
+        const response = await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'CREATE', sheet: "Contacts_Master", data: [newContact] }), 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
+        }); 
+        const result = await response.json(); 
+        
+        if (result.status === "success") { 
+            contactsData.push(newContact); 
+            localStorage.setItem('buzzGuideContacts', JSON.stringify(contactsData)); 
+            
+            // 🌟 บังคับตารางให้เรียง "อัปเดตล่าสุดไว้บนสุด" เสมอ เพื่อให้เห็นคนที่เพิ่งเพิ่ม
+            currentSortCol = 'update';
+            currentSortDir = 'desc';
+            
+            // เคลียร์ช่องค้นหา
+            const searchInput = document.getElementById('searchInput');
+            if(searchInput) searchInput.value = ''; 
+            
+            closeAddModal(); 
+            updateDashboard(); 
+            resetPageAndRender(); // กลับไปหน้า 1 และวาดตารางใหม่
+            
+        } else { 
+            alert('❌ บันทึกข้อมูลบน Google Sheets ไม่สำเร็จ'); 
+        } 
+    } catch (err) { 
+        alert('❌ การเชื่อมต่อล้มเหลว กรุณาตรวจสอบอินเทอร์เน็ต'); 
+    } finally { 
+        // 5. คืนค่าปุ่ม
+        btn.disabled = false; 
+        btn.innerHTML = 'บันทึกรายชื่อ'; 
+    } 
+}
+
+function deleteContact(id) { 
+    document.getElementById(`row-${id}`).style.opacity = '0.5'; 
     fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "DELETE", sheet: "Contacts_Master", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } })
-    .then(res => res.json()).then(r => { if(r.status === "success") fetchContacts(); });
+    .then(res => res.json()).then(r => { if(r.status === "success") { contactsData = contactsData.filter(p => p.PersonID !== id); localStorage.setItem('buzzGuideContacts', JSON.stringify(contactsData)); resetPageAndRender(); updateDashboard(); } }); 
 }
 
-// Bulk Add System
-function downloadCSVTemplate() {
-    const csvData = "\uFEFFName,Contact_Type,Phone,Current_Status,Score_Active,Score_Friendly,Score_Money\nสมชาย,Memory Jogger,0812345678,ลิสต์รายชื่อ,4,4,3";
-    const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(new Blob([csvData], { type: 'text/csv;charset=utf-8;' }))); link.setAttribute("download", "Template.csv");
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+// -----------------------------------------
+// 8. TOOLTIPS & HINTS
+// -----------------------------------------
+function toggleHint(e, hintId) {
+    e.stopPropagation(); 
+    const popup = document.getElementById(hintId); const isShowing = popup.classList.contains('show');
+    document.querySelectorAll('.hint-popup').forEach(p => p.classList.remove('show'));
+    if (!isShowing) popup.classList.add('show');
 }
-function togglePasteArea() { const area = document.getElementById('pasteCsvArea'); area.style.display = area.style.display === 'none' ? 'block' : 'none'; }
-function processCSVText(text) {
-    const lines = text.split('\n'); let addedCount = 0; let startIdx = (lines[0].toLowerCase().includes('name') || lines[0].toLowerCase().includes('type')) ? 1 : 0;
-    for (let i = startIdx; i < lines.length; i++) {
-        if(!lines[i].trim()) continue; const cols = lines[i].split(lines[i].includes('\t') ? '\t' : ',');
-        addBulkRow({ Name: cols[0]?.trim(), Contact_Type: cols[1]?.trim() || 'Memory Jogger', Phone: cols[2]?.trim(), Current_Status: cols[3]?.trim() || 'ลิสต์รายชื่อ', Score_Active: cols[4]?.trim() || '3', Score_Friendly: cols[5]?.trim() || '3', Score_Money: cols[6]?.trim() || '3' });
-        addedCount++;
-    }
-    alert(`โหลดสำเร็จ ${addedCount} รายการ`);
-}
-function importFromRawText() { const text = document.getElementById('csvRawText').value; if(!text.trim()) return; processCSVText(text); document.getElementById('csvRawText').value = ''; togglePasteArea(); }
-function handleCSV(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { processCSVText(e.target.result); }; reader.readAsText(file); event.target.value = ''; }
-function openBulkModal() { document.getElementById('bulkModal').style.display = 'flex'; document.getElementById('formAction').value = 'CREATE'; document.getElementById('bulkInputBody').innerHTML = ''; addBulkRow(); }
-function closeModal() { document.getElementById('bulkModal').style.display = 'none'; }
-function addBulkRow(data = {}, allowDelete = true) {
-    const tbody = document.getElementById('bulkInputBody'); const tr = document.createElement('tr');
-    tr.innerHTML = `<input type="hidden" class="r-id" value=""><td><input type="text" class="r-name" value="${data.Name || ''}" required></td><td><select class="r-type"><option value="Memory Jogger">Memory Jogger</option><option value="Sponsor List">Sponsor List</option><option value="Customer List">Customer List</option><option value="ABO">ABO</option><option value="MEM">MEM</option></select></td><td><input type="text" class="r-phone" value="${data.Phone || ''}"></td><td>${generateStatusDropdownHTML('ลิสต์รายชื่อ', 'bulk').replace(/onchange="[^"]*"/, '')}</td><td><select class="r-a"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></td><td><select class="r-f"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></td><td><select class="r-m"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></td><td style="display: ${allowDelete ? 'table-cell' : 'none'}; text-align:center;"><button type="button" class="btn-danger" onclick="this.closest('tr').remove()">X</button></td>`;
-    tbody.appendChild(tr);
-}
-
-async function submitBulkForm(e) {
-    e.preventDefault(); const rows = document.querySelectorAll('#bulkInputBody tr'); if(rows.length === 0) return;
-    const currentTime = new Date().toISOString(); let payloadData = []; let nextIdNum = parseInt(generateShortID(contactsData).replace('N', ''));
-    for(let tr of rows) {
-        const name = tr.querySelector('.r-name').value.trim(); if(!name) continue;
-        payloadData.push({ PersonID: 'N' + String(nextIdNum++).padStart(4, '0'), Name: name, Contact_Type: tr.querySelector('.r-type').value, Phone: tr.querySelector('.r-phone').value, Current_Status: tr.querySelector('.r-status').value, Score_Active: tr.querySelector('.r-a').value, Score_Friendly: tr.querySelector('.r-f').value, Score_Money: tr.querySelector('.r-m').value, Last_Update: currentTime });
-    }
-    document.getElementById('submitBtn').disabled = true;
-    try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'CREATE', sheet: "Contacts_Master", id: null, data: payloadData }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        const result = await response.json(); if (result.status === "success") { closeModal(); fetchContacts(); } 
-    } catch (error) {} finally { document.getElementById('submitBtn').disabled = false; }
-}
-
-// โหลดข้อมูลรายชื่อทันที
-fetchContacts();
+document.addEventListener('click', () => { document.querySelectorAll('.hint-popup.show').forEach(p => p.classList.remove('show')); });
+window.addEventListener('scroll', () => { document.querySelectorAll('.hint-popup.show').forEach(p => p.classList.remove('show')); }, true);

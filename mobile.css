@@ -1,0 +1,110 @@
+/* =========================================================================
+   BUZZ GUIDE CRM - MOBILE STYLESHEET (max-width: 768px)
+   ไฟล์นี้จะถูกเรียกใช้เฉพาะตอนเปิดบนหน้าจอมือถือหรือแท็บเล็ตเท่านั้น
+========================================================================= */
+
+.mobile-only { display: flex !important; }
+.desktop-only { display: none !important; }
+
+/* 1. ซ่อน Sidebar และเตรียมเป็นเมนูสไลด์ */
+.sidebar { 
+    position: fixed; 
+    left: 0; top: 0; bottom: 0; 
+    transform: translateX(-100%); 
+    box-shadow: var(--shadow-lg); 
+}
+.sidebar.open { transform: translateX(0); }
+.mobile-menu-btn { display: flex; }
+
+/* 2. จัด Layout หลัก */
+.topbar { padding: 0 16px; height: 60px; }
+.topbar-actions .input-group, .topbar-actions .btn { display: none; } /* ซ่อนช่องค้นหาบน Header ย้ายลงตาราง */
+.content-area { padding: 16px; }
+.summary-grid { grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
+
+/* 3. ระเบิดตารางกลายเป็นการ์ด (Grid Cards) */
+.table-card { border: none; background: transparent; box-shadow: none; }
+.table-toolbar.mobile-only { display: flex !important; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+
+.data-table, .data-table tbody { display: block; width: 100%; }
+.data-table thead { display: none; } /* ซ่อนหัวตาราง */
+
+.data-table tbody tr.main-row {
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+
+/* จัดการช่องข้อมูล (td) ภายในการ์ด */
+.data-table td { display: block; padding: 0; border: none; width: 100%; white-space: normal !important; }
+
+/* ซ่อนคอลัมน์ที่ไม่จำเป็น (ลำดับ, อายุ, เรื่องที่นัด, FARM) */
+#contactsTable td:nth-child(1), #contactsTable td:nth-child(3), 
+#contactsTable td:nth-child(6), #contactsTable td:nth-child(7) { display: none !important; }
+
+/* จัดตำแหน่งข้อมูลบนการ์ด */
+#contactsTable td:nth-child(2) { grid-column: 1 / 2; grid-row: 1; }
+#contactsTable td:nth-child(10) { grid-column: 2 / 3; grid-row: 1; display: flex; justify-content: flex-end; }
+#contactsTable td:nth-child(4) { grid-column: 1 / 3; grid-row: 2; }
+#contactsTable td:nth-child(5) { grid-column: 1 / 3; grid-row: 3; }
+#contactsTable td:nth-child(8) { grid-column: 1 / 3; grid-row: 4; }
+#contactsTable td:nth-child(9) { grid-column: 1 / 3; grid-row: 5; }
+
+/* 4. ลิ้นชัก (Drawer) บนมือถือ - ใช้ Scroll Snap ปัดซ้ายขวา */
+#contactsTable tbody tr.main-row.row-expanded { 
+    border-bottom-left-radius: 0; 
+    border-bottom-right-radius: 0; 
+    margin-bottom: 0; 
+    border-bottom: 1px dashed var(--border-color); 
+}
+#contactsTable tbody tr.expanded-row { display: none; width: 100%; }
+#contactsTable tbody tr.expanded-row.open { display: block; }
+#contactsTable tbody tr.expanded-row td { display: block; width: 100%; padding: 0; }
+
+.crm-drawer { 
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg); 
+    border: 1px solid var(--border-color); 
+    border-top: none; 
+    padding: 16px 0 0 0; 
+    margin-bottom: 16px; 
+    overflow: hidden; 
+}
+.drawer-header-actions { padding: 0 16px 12px 16px; }
+
+/* แถบเลื่อนการ์ด 7 ใบ */
+.crm-grid { 
+    display: flex !important; 
+    flex-wrap: nowrap; 
+    overflow-x: auto; 
+    scroll-snap-type: x mandatory; 
+    scroll-padding-left: 16px; 
+    gap: 12px !important; 
+    padding: 0 16px 16px 16px; 
+    -webkit-overflow-scrolling: touch; 
+}
+.crm-box { 
+    min-width: 85vw; 
+    max-width: 85vw; 
+    scroll-snap-align: start; 
+    flex-shrink: 0; 
+    margin-right: 4px; 
+}
+
+/* 5. Modal มือถือแบบ Fullscreen สไลด์ขึ้น */
+.modal-overlay { align-items: flex-end; padding: 0; }
+.modal-content { 
+    height: 100vh; 
+    max-height: 100vh; 
+    max-width: 100vw; 
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0; 
+    transform: translateY(100%); 
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); 
+}
+.modal-overlay.open .modal-content { transform: translateY(0); }

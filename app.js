@@ -1,67 +1,115 @@
-// =========================================
-// APP.JS - ระบบส่วนกลาง (Global System)
-// =========================================
+// =========================================================================
+// APP.JS - Core Application Logic (Buzz Guide - Cark UI Edition)
+// =========================================================================
 
-// 1. ตั้งค่า API (ลิงก์ Google Apps Script)
-const API_URL = "https://script.google.com/macros/s/AKfycbxmldbHzjaJ0uys-unn3NPnuK12As8Z9-0ofOBDqjrkSUMzI1uuyHUbjW4xunakPz_MNA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzxkUXB8S1LhwJERDd4HlrsMTLmvAV-MWBya0jqeB5QTEa1tjsdX2aXV4GVDuJajZWRnQ/exec";
 
-// 2. ฟังก์ชันอรรถประโยชน์ (Utility Functions) ที่ใช้ร่วมกันทั้งแอป
-function formatDateTime(dateString) {
-    if (!dateString) return '-';
-    const d = new Date(dateString);
-    if (isNaN(d)) return dateString;
-    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear() + 543} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-}
+// -----------------------------------------
+// 1. INITIALIZE (ทำงานทันทีที่โหลดแอป)
+// -----------------------------------------
+window.onload = () => {
+    // โหลดธีมสีที่เคยบันทึกไว้ในเครื่อง (ถ้าไม่มีให้ใช้ default)
+    const savedTheme = localStorage.getItem('buzzGuideTheme') || 'default';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    // อัปเดต Dropdown ให้ตรงกับธีมที่โหลดมา
+    const themeSelect = document.getElementById('themeSelect');
+    if (themeSelect) themeSelect.value = savedTheme;
 
-function generateShortID(dataArray) {
-    if (!dataArray || dataArray.length === 0) return 'N0001';
-    const ids = dataArray.map(p => { 
-        const match = p.PersonID ? p.PersonID.match(/\d+/) : null; 
-        return match ? parseInt(match[0]) : 0; 
-    }).sort((a, b) => b - a);
-    return 'N' + String((ids[0] || 0) + 1).padStart(4, '0');
-}
+    // ตั้งค่าชื่อหน้าแรก
+    updatePageTitle('contacts');
+};
 
-// 3. ระบบ Theme
-function initTheme() {
-    const savedTheme = localStorage.getItem('buzzTheme') || 'morning';
-    document.body.setAttribute('data-theme', savedTheme);
-    const select = document.getElementById('themeSelect');
-    if(select) select.value = savedTheme;
-}
-
-function changeTheme(themeName) {
-    document.body.setAttribute('data-theme', themeName);
-    localStorage.setItem('buzzTheme', themeName);
-}
-
-// 4. ระบบ Login
-function verifyPIN() {
-    const pin = document.getElementById('pinInput').value;
-    if (pin === '1234' || true) { // ทิ้ง || true ไว้เพื่อข้าม Login ตอนพัฒนา
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('appContent').style.display = 'flex'; 
-        
-        // โหลดข้อมูลเมื่อเข้าแอปสำเร็จ
-        if (typeof fetchContacts === 'function') fetchContacts();
-        if (typeof fetchGoals === 'function') fetchGoals();
-    } else { 
-        alert('รหัส PIN ไม่ถูกต้อง'); 
-        document.getElementById('pinInput').value = ''; 
+// -----------------------------------------
+// 2. SIDEBAR MANAGEMENT (ระบบเมนูซ้ายมือ)
+// -----------------------------------------
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    if (sidebar && overlay) {
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
     }
 }
 
-function handleEnter(e) { if (e.key === 'Enter') verifyPIN(); }
-
-// 5. ระบบสลับหน้าจอ (Navigation)
-function switchTab(tabId, btn) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+// ฟังก์ชันซ่อนเมนูอัตโนมัติบนมือถือ (ทำงานเมื่อกดเลือกเมนูแล้ว)
+function toggleSidebarMobile() {
+    if (window.innerWidth <= 900) {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        if (sidebar.classList.contains('active')) {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+    }
 }
 
-// ข้ามล็อกอินเพื่อทดสอบการพัฒนา (ลบ 2 บรรทัดนี้ออกถ้าอยากใช้ PIN)
-document.getElementById('loginScreen').style.display = 'none';
-document.getElementById('appContent').style.display = 'flex';
-initTheme();
+// -----------------------------------------
+// 3. TAB MANAGEMENT (ระบบเปลี่ยนหน้าจอ)
+// -----------------------------------------
+function switchTab(tabId, btn) {
+    // 1. ซ่อนทุก Section
+    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+    
+    // 2. ลบสถานะ Active ของปุ่มเมนูทั้งหมด
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    
+    // 3. แสดง Section ที่เลือก
+    const activeSection = document.getElementById(tabId);
+    if (activeSection) activeSection.classList.add('active');
+    
+    // 4. ไฮไลต์ปุ่มที่ถูกกด
+    if (btn) btn.classList.add('active');
+
+    // 5. เปลี่ยนข้อความบน Header ให้ตรงกับหน้า
+    updatePageTitle(tabId);
+}
+
+// ฟังก์ชันเปลี่ยนชื่อหัวเรื่องด้านบน
+function updatePageTitle(tabId) {
+    const titleEl = document.getElementById('pageTitleText');
+    if (!titleEl) return;
+    
+    if (tabId === 'contacts') titleEl.innerText = 'ผู้มุ่งหวัง (Contacts)';
+    else if (tabId === 'goals') titleEl.innerText = 'เป้าหมาย (Goals)';
+    else if (tabId === 'daily') titleEl.innerText = 'งานประจำวัน (Daily)';
+}
+
+// -----------------------------------------
+// 4. THEME MANAGEMENT (ระบบเปลี่ยนธีมสี)
+// -----------------------------------------
+function changeTheme(themeName) {
+    // เปลี่ยนธีมโดยใช้ Attribute ที่ tag HTML (documentElement)
+    document.documentElement.setAttribute('data-theme', themeName);
+    // บันทึกการตั้งค่าลงเครื่อง (Cache)
+    localStorage.setItem('buzzGuideTheme', themeName);
+}
+
+// -----------------------------------------
+// 5. LOGIN SYSTEM (ระบบเข้าสู่ระบบ)
+// -----------------------------------------
+function verifyPIN() {
+    const pinInput = document.getElementById('pinInput');
+    const pin = pinInput.value;
+    
+    // รหัสผ่านเข้าใช้งาน (ปรับเปลี่ยนได้ตามต้องการ)
+    if (pin === '1234') { 
+        // ซ่อนหน้า Login
+        document.getElementById('loginScreen').style.display = 'none';
+        
+        // แสดงหน้าจอหลัก (ต้องใช้ display: flex เพื่อให้ Sidebar และ Content แบ่งสัดส่วนกัน)
+        document.getElementById('appContent').style.display = 'flex'; 
+        
+        // สั่งโหลดข้อมูลผู้มุ่งหวังทันทีที่เข้าสู่ระบบสำเร็จ
+        if (typeof fetchContacts === "function") fetchContacts();
+    } else {
+        alert('❌ รหัส PIN ไม่ถูกต้อง!');
+        pinInput.value = ''; 
+        pinInput.focus();
+    }
+}
+
+// กด Enter เพื่อล็อกอินได้เลย
+function handleEnter(e) { 
+    if (e.key === 'Enter') verifyPIN(); 
+}
