@@ -5,7 +5,6 @@
 // -----------------------------------------
 // 1. CONFIG & STATE
 // -----------------------------------------
-const API_URL = "https://script.google.com/macros/s/AKfycbzxkUXB8S1LhwJERDd4HlrsMTLmvAV-MWBya0jqeB5QTEa1tjsdX2aXV4GVDuJajZWRnQ/exec"; 
 
 let contactsData = [];
 let autoSaveTimers = {}; 
@@ -173,6 +172,7 @@ function updateDashboard() {
     }
 }
 
+// ดึงข้อมูลทั้งหมด
 async function fetchContacts() { 
     const tbody = document.getElementById('contactsTableBody'); 
     const cachedData = localStorage.getItem('buzzGuideContacts'); 
@@ -184,16 +184,14 @@ async function fetchContacts() {
         if(tbody) tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding: 3rem; color: var(--primary);">กำลังซิงค์ข้อมูล... ⏳</td></tr>`; 
     } 
     
-    try { 
-        const response = await fetch(`${API_URL}?sheet=Contacts_Master`); 
-        const result = await response.json(); 
-        if (result.status === "success") { 
-            contactsData = result.data; 
-            localStorage.setItem('buzzGuideContacts', JSON.stringify(contactsData)); 
-            renderTable(); updateDashboard();
-        } 
-    } catch (error) { 
-        if (!cachedData && tbody) tbody.innerHTML = `<tr><td colspan="10" style="color:var(--danger); text-align:center; padding:3rem;"><b>⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ (Offline)</b></td></tr>`; 
+    // 🌟 เรียกใช้ API จากส่วนกลาง
+    const result = await DbAPI.fetchAll(); 
+    if (result && result.status === "success") { 
+        contactsData = result.data; 
+        localStorage.setItem('buzzGuideContacts', JSON.stringify(contactsData)); 
+        renderTable(); updateDashboard();
+    } else if (!cachedData && tbody) { 
+        tbody.innerHTML = `<tr><td colspan="10" style="color:var(--danger); text-align:center; padding:3rem;"><b>⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ (Offline)</b></td></tr>`; 
     } 
 }
 
@@ -212,25 +210,59 @@ function setDashboardFilter(filterType) {
 
 function setSort(col, dir) { currentSortCol = col; currentSortDir = dir; resetPageAndRender(); }
 
-// 🌟 ระบบสลับหน้าจอ (SPA Routing) โดยไม่โหลดหน้าใหม่
+// 🌟 ตัวแปรเก็บสถานะว่าหน้าไหนถูกโหลด (วาด HTML) ไปแล้วบ้าง (Lazy Loading)
+const viewRendered = { 
+    contacts: true, // หน้าแรกถูกโหลดเสมอ
+    settings: true, // หน้าตั้งค่ามี HTML ฝังอยู่แล้ว
+    guide: false,   // หน้าคู่มือ (รอโหลดเมื่อคลิก)
+    daily: false,
+    goals: false,
+    followup: false
+};
+
+// 🌟 ระบบสลับหน้าจอ (SPA Routing + Lazy Loading)
 function switchView(viewId) {
-    // 1. ซ่อนทุกหน้า และโชว์หน้าที่เลือก
+    // 1. [Lazy Loading] ตรวจสอบและสร้างหน้าจอถ้ายังไม่เคยสร้าง
+    if (!viewRendered[viewId]) {
+        if (viewId === 'guide' && typeof renderGuideView === 'function') {
+            renderGuideView(); // วาดหน้าคู่มือ
+        }
+        // *สำหรับหน้าอื่นๆ ในอนาคต (เช่นเป้าหมาย, งานประจำวัน) จะมาใส่เพิ่มตรงนี้ครับ*
+        
+        viewRendered[viewId] = true; // บันทึกว่าหน้านี้ถูกวาดแล้ว จะได้ไม่วาดซ้ำ
+    }
+
+    // 2. ซ่อนทุกหน้า และโชว์หน้าที่เลือก
     document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active-view'));
-    document.getElementById(`${viewId}-view`).classList.add('active-view');
+    const targetView = document.getElementById(`${viewId}-view`);
+    if (targetView) targetView.classList.add('active-view');
 
-    // 2. เปลี่ยนแถบ Active เมนูด้านข้าง
+    // 3. เปลี่ยนแถบ Active เมนูด้านข้าง
     document.querySelectorAll('.sidebar-nav .nav-item').forEach(nav => nav.classList.remove('active'));
-    document.getElementById(`nav-${viewId}`).classList.add('active');
+    const targetNav = document.getElementById(`nav-${viewId}`);
+    if (targetNav) targetNav.classList.add('active');
 
-    // 3. เปลี่ยนชื่อบน Topbar
-    const titleMap = { 'contacts': 'รายชื่อผู้มุ่งหวัง', 'settings': 'ตั้งค่าระบบ' };
-    document.querySelector('.topbar-title').innerText = titleMap[viewId] || '';
+    // 4. เปลี่ยนชื่อบน Topbar
+    const titleMap = { 
+        'contacts': 'รายชื่อผู้มุ่งหวัง', 
+        'settings': 'ตั้งค่าระบบ',
+        'guide': 'คู่มือทำรายชื่อ (Buzz Guide)',
+        'daily': 'งานประจำวัน',
+        'goals': 'เป้าหมาย',
+        'followup': 'ติดตามผล'
+    };
+    const topbarTitle = document.querySelector('.topbar-title');
+    if (topbarTitle) topbarTitle.innerText = titleMap[viewId] || '';
 
-    // 4. ปิด Sidebar ถ้าเปิดในมือถือ
-    if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+    // 5. ปิด Sidebar ถ้าเปิดในมือถือ
+    if(window.innerWidth <= 768) {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) sidebar.classList.remove('open');
+    }
 }
+
 // -----------------------------------------
-// 5. CORE RENDERING (V11.5: Calendar Date Range Filters)
+// 5. CORE RENDERING (V11.7: Event Delegation & Lazy Load)
 // -----------------------------------------
 function renderTable() {
     const tbody = document.getElementById('contactsTableBody'); 
@@ -251,19 +283,16 @@ function renderTable() {
     const filterAppt = document.querySelector('input[name="rad-appt"]:checked')?.value || 'all';
     const filterScore = document.querySelector('input[name="rad-score"]:checked')?.value || 'all';
     
-    // 🌟 ดึงค่าจากปฏิทิน (แปลงเป็นตัวเลข Time เพื่อให้เปรียบเทียบง่าย ป้องกันบั๊ก Timezone)
     const parseLocal = (dStr) => { if(!dStr) return null; const [y, m, d] = dStr.split('-'); return new Date(y, m-1, d).getTime(); };
     const sAppt = parseLocal(document.getElementById('filterApptStart')?.value);
     const eAppt = parseLocal(document.getElementById('filterApptEnd')?.value);
     const sUpd = parseLocal(document.getElementById('filterUpdateStart')?.value);
     const eUpd = parseLocal(document.getElementById('filterUpdateEnd')?.value);
-
     const today = new Date(); today.setHours(0,0,0,0);
 
     // 🌟 1. ระบบ Filter
     let displayData = contactsData.filter(row => {
         if(!row.PersonID) return false;
-        
         if (currentDashboardFilter === 'appts' && (!row.Next_Appt_Date || new Date(row.Next_Appt_Date) < today)) return false;
         if (currentDashboardFilter === 'success' && row.Current_Status !== 'ซื้อสินค้า/สมัครแล้ว') return false;
         
@@ -271,10 +300,8 @@ function renderTable() {
         const typeMatch = checkedTypes.length === 0 || checkedTypes.includes(row.Contact_Type);
         const statusMatch = checkedStatuses.includes(row.Current_Status) || (checkedStatuses.length === 0 && row.Current_Status === '');
         
-        // 🌟 1.3 กรองวันเวลานัดหมาย (รองรับทั้งแบบปฏิทิน และแบบตัวเลือกด่วน)
         let apptMatch = true;
         if (sAppt || eAppt) {
-            // ถ้าใช้ปฏิทิน
             if (!row.Next_Appt_Date) { apptMatch = false; }
             else {
                 const rowD = new Date(row.Next_Appt_Date); rowD.setHours(0,0,0,0); const rTime = rowD.getTime();
@@ -282,7 +309,6 @@ function renderTable() {
                 if (eAppt && rTime > eAppt) apptMatch = false;
             }
         } else if (filterAppt !== 'all') {
-            // ถ้าใช้ตัวเลือกสำเร็จรูป
             if (!row.Next_Appt_Date) { apptMatch = false; }
             else {
                 const apptDate = new Date(row.Next_Appt_Date); apptDate.setHours(0,0,0,0);
@@ -293,7 +319,6 @@ function renderTable() {
             }
         }
 
-        // 🌟 1.4 กรองวันที่อัปเดต (ปฏิทิน)
         let updateMatch = true;
         if (sUpd || eUpd) {
             if (!row.Last_Update) { updateMatch = false; }
@@ -311,7 +336,6 @@ function renderTable() {
             if (filterScore === '3' && currentScore < 3) scoreMatch = false;
             if (filterScore === 'low' && currentScore >= 3) scoreMatch = false;
         }
-
         return nameMatch && typeMatch && statusMatch && apptMatch && updateMatch && scoreMatch;
     });
 
@@ -338,7 +362,7 @@ function renderTable() {
     const startIndex = (currentPage - 1) * itemsPerPage; 
     const pageData = displayData.slice(startIndex, startIndex + itemsPerPage);
 
-    // 🌟 4. วาดแถวข้อมูล
+    // 🌟 4. วาดแถวข้อมูล (ลบ OnClick ออกแล้ว ใช้ Class + Data-ID แทน)
     pageData.forEach((row, index) => {
         let displayAge = row.Age || ''; if (row.DOB) displayAge = calculateAge(row.DOB) || displayAge;
         let ageOptions = '<option value="">-</option>'; for(let i=15; i<=80; i++) ageOptions += `<option value="${i}" ${row.Age == i ? 'selected':''}>${i}</option>`;
@@ -347,14 +371,12 @@ function renderTable() {
         if (row.Next_Appt_Date) {
             const apptDate = new Date(row.Next_Appt_Date); apptDate.setHours(0,0,0,0);
             const diffDays = Math.ceil((apptDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-            if (diffDays < 0) apptClass = 'row-overdue'; 
-            else if (diffDays >= 0 && diffDays <= 2) apptClass = 'row-today'; 
+            if (diffDays < 0) apptClass = 'row-overdue'; else if (diffDays >= 0 && diffDays <= 2) apptClass = 'row-today'; 
         }
         
         const trMain = document.createElement('tr'); 
         trMain.id = `row-${row.PersonID}`; 
         trMain.className = `main-row ${apptClass}`; 
-        trMain.onclick = (e) => { if (!['SELECT','BUTTON','INPUT'].includes(e.target.tagName)) toggleExpandRow(row.PersonID); };
 
         trMain.innerHTML = `
             <td style="text-align:center; color:var(--text-muted);">${startIndex + index + 1}</td>
@@ -371,7 +393,7 @@ function renderTable() {
             <td><div class="desktop-only">${generateTypeDropdownHTML(row.Contact_Type, row.PersonID)}</div></td>
             <td>
                 <div style="display:flex; flex-direction:column; gap:4px;">
-                    <input type="datetime-local" style="border:none; background:transparent; color:var(--primary); font-weight:600; cursor:pointer;" value="${toLocalDatetimeInput(row.Next_Appt_Date)}" onchange="triggerAutoSave('${row.PersonID}')">
+                    <input type="datetime-local" class="trigger-save" data-id="${row.PersonID}" style="border:none; background:transparent; color:var(--primary); font-weight:600; cursor:pointer;" value="${toLocalDatetimeInput(row.Next_Appt_Date)}">
                     <div class="mobile-only" style="color:var(--text-muted); font-size:0.75rem;">${row.Next_Appt_Topic ? 'เรื่อง: '+row.Next_Appt_Topic : ''}</div>
                 </div>
             </td>
@@ -381,7 +403,7 @@ function renderTable() {
             <td class="col-update" style="font-size:0.75rem; color:var(--text-muted);">${formatDateShort(row.Last_Update)}</td>
             <td style="text-align:center;">
                 <div class="action-menu-container">
-                    <button id="status-btn-${row.PersonID}" class="btn-icon-dots view-mode" style="width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center; padding:0; margin:0 auto;" onclick="toggleActionMenu('${row.PersonID}'); event.stopPropagation();">⋮</button>
+                    <button id="status-btn-${row.PersonID}" class="btn-icon-dots btn-action-dots view-mode" data-id="${row.PersonID}" style="width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center; padding:0; margin:0 auto;">⋮</button>
                     <div class="action-menu-dropdown view-mode" id="action-menu-${row.PersonID}">
                         <button onclick="clickLeftBtn('${row.PersonID}'); event.stopPropagation();">✏️ แก้ไขข้อมูล</button>
                         <button style="color:var(--danger);" onclick="clickRightBtn('${row.PersonID}'); event.stopPropagation();">🗑️ ลบรายชื่อ</button>
@@ -395,18 +417,18 @@ function renderTable() {
         standardProducts.forEach(sp => { if(!pMap[sp]) pMap[sp] = 'none'; });
         let edProducts = '';
         Object.keys(pMap).forEach(item => {
-            const st = pMap[item]; let cls = 'skill-tag'; let ic = item;
+            const st = pMap[item]; let cls = 'skill-tag product-tag'; let ic = item;
             if(st === 'interested') { cls += ' status-yes'; ic = '🟡 ' + item; } else if(st === 'used') { cls += ' status-teach'; ic = '✅ ' + item; }
-            edProducts += `<button type="button" class="${cls}" data-value="${item}" data-status="${st}" onclick="toggleModalProduct(this, '${row.PersonID}', event)"><span>${ic}</span> <span class="tag-remove" onclick="removeTag(this, '${row.PersonID}', event)">✕</span></button>`;
+            edProducts += `<button type="button" class="${cls}" data-value="${item}" data-status="${st}" data-id="${row.PersonID}"><span>${ic}</span> <span class="tag-remove" data-id="${row.PersonID}">✕</span></button>`;
         });
 
         let skData = {}; try { skData = JSON.parse(row.Personal_Skill || "{}"); } catch(e){}
         let allSk = [...skillList]; Object.keys(skData).forEach(k => { if(!allSk.includes(k)) allSk.push(k); });
         let edSkills = '';
         allSk.forEach(sk => {
-            const val = skData[sk] || 'no'; let cls = 'skill-tag'; let ic = sk;
+            const val = skData[sk] || 'no'; let cls = 'skill-tag skill-tag-btn'; let ic = sk;
             if(val === 'yes') { cls += ' status-yes'; ic = '🟡 ' + sk; } else if(val === 'teach') { cls += ' status-teach'; ic = '✅ ' + sk; }
-            edSkills += `<button type="button" class="${cls}" data-skill="${sk}" data-val="${val}" onclick="toggleModalSkill(this, '${row.PersonID}', event)"><span>${ic}</span> <span class="tag-remove" onclick="removeTag(this, '${row.PersonID}', event)">✕</span></button>`;
+            edSkills += `<button type="button" class="${cls}" data-skill="${sk}" data-val="${val}" data-id="${row.PersonID}"><span>${ic}</span> <span class="tag-remove" data-id="${row.PersonID}">✕</span></button>`;
         });
 
         const trDrawer = document.createElement('tr'); 
@@ -425,16 +447,16 @@ function renderTable() {
                     <div class="crm-grid">
                         <div class="crm-box box-info">
                             <div class="crm-section-title">👤 ข้อมูลพื้นฐาน</div>
-                            <div class="seamless-row"><span class="seamless-label">ชื่อเต็ม:</span> <input type="text" class="seamless-input ex-name" value="${row.Name || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
-                            <div class="seamless-row"><span class="seamless-label">เบอร์โทร:</span> <input type="text" class="seamless-input ex-phone" value="${row.Phone || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
-                            <div class="seamless-row"><span class="seamless-label">สายสัมพันธ์:</span> <input type="text" class="seamless-input ex-rel" value="${row.Relation_Jogger || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
-                            <div class="seamless-row"><span class="seamless-label">อายุ:</span> <select class="seamless-input ex-age" onchange="triggerAutoSave('${row.PersonID}')">${ageOptions}</select></div>
+                            <div class="seamless-row"><span class="seamless-label">ชื่อเต็ม:</span> <input type="text" class="seamless-input ex-name trigger-save" data-id="${row.PersonID}" value="${row.Name || ''}"></div>
+                            <div class="seamless-row"><span class="seamless-label">เบอร์โทร:</span> <input type="text" class="seamless-input ex-phone trigger-save" data-id="${row.PersonID}" value="${row.Phone || ''}"></div>
+                            <div class="seamless-row"><span class="seamless-label">สายสัมพันธ์:</span> <input type="text" class="seamless-input ex-rel trigger-save" data-id="${row.PersonID}" value="${row.Relation_Jogger || ''}"></div>
+                            <div class="seamless-row"><span class="seamless-label">อายุ:</span> <select class="seamless-input ex-age trigger-save" data-id="${row.PersonID}">${ageOptions}</select></div>
                         </div>
                         <div class="crm-box box-system">
                             <div class="crm-section-title">📋 ข้อมูลระบบ</div>
-                            <div class="seamless-row"><span class="seamless-label">รหัสสมาชิก:</span> <input type="text" class="seamless-input ex-abo" value="${row.ABO_Number || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
-                            <div class="seamless-row"><span class="seamless-label">วันเกิด:</span> <input type="date" class="seamless-input ex-dob" value="${row.DOB ? row.DOB.substring(0,10) : ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
-                            <div class="seamless-row"><span class="seamless-label">หมดอายุ:</span> <input type="date" class="seamless-input ex-expire" value="${row.Expire_Date ? row.Expire_Date.substring(0,10) : ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
+                            <div class="seamless-row"><span class="seamless-label">รหัสสมาชิก:</span> <input type="text" class="seamless-input ex-abo trigger-save" data-id="${row.PersonID}" value="${row.ABO_Number || ''}"></div>
+                            <div class="seamless-row"><span class="seamless-label">วันเกิด:</span> <input type="date" class="seamless-input ex-dob trigger-save" data-id="${row.PersonID}" value="${row.DOB ? row.DOB.substring(0,10) : ''}"></div>
+                            <div class="seamless-row"><span class="seamless-label">หมดอายุ:</span> <input type="date" class="seamless-input ex-expire trigger-save" data-id="${row.PersonID}" value="${row.Expire_Date ? row.Expire_Date.substring(0,10) : ''}"></div>
                         </div>
                         <div class="crm-box box-product">
                             <div class="crm-section-title" style="position: relative;">🛒 สินค้า <span class="hint-icon" onclick="toggleHint(event, 'hint-prod-${row.PersonID}')">💡</span><div class="hint-popup" id="hint-prod-${row.PersonID}"><div style="display:flex; gap:8px; flex-wrap:wrap; line-height:1.4;"><span><span class="hint-dot gray"></span>ยังไม่เสนอ</span> | <span>🟡 สนใจ</span> | <span>✅ ใช้แล้ว</span></div></div></div>
@@ -448,9 +470,9 @@ function renderTable() {
                         </div>
                         <div class="crm-box box-followup" style="background:#FEF3C7; border-color:#FDE047;">
                             <div class="crm-section-title" style="color:#A16207;">🗓️ การติดตามผล</div>
-                            <div class="seamless-row"><span class="seamless-label" style="color:#92400E;">วันเวลานัด:</span> <input type="datetime-local" class="seamless-input ex-appt-date" style="color:var(--primary);" value="${toLocalDatetimeInput(row.Next_Appt_Date)}" oninput="triggerAutoSave('${row.PersonID}')"></div>
-                            <div class="seamless-row"><span class="seamless-label" style="color:#92400E;">เรื่องที่นัด:</span> <input type="text" class="seamless-input ex-appt-topic" value="${row.Next_Appt_Topic || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
-                            <div class="seamless-row" style="flex-direction:column; align-items:flex-start;"><span class="seamless-label" style="color:#92400E; margin-bottom:4px;">📌 Note สั้นๆ:</span> <input type="text" class="seamless-input ex-status-note" style="width:100%; text-align:left;" value="${row.Status_Note || ''}" oninput="triggerAutoSave('${row.PersonID}')"></div>
+                            <div class="seamless-row"><span class="seamless-label" style="color:#92400E;">วันเวลานัด:</span> <input type="datetime-local" class="seamless-input ex-appt-date trigger-save" data-id="${row.PersonID}" style="color:var(--primary);" value="${toLocalDatetimeInput(row.Next_Appt_Date)}"></div>
+                            <div class="seamless-row"><span class="seamless-label" style="color:#92400E;">เรื่องที่นัด:</span> <input type="text" class="seamless-input ex-appt-topic trigger-save" data-id="${row.PersonID}" value="${row.Next_Appt_Topic || ''}"></div>
+                            <div class="seamless-row" style="flex-direction:column; align-items:flex-start;"><span class="seamless-label" style="color:#92400E; margin-bottom:4px;">📌 Note สั้นๆ:</span> <input type="text" class="seamless-input ex-status-note trigger-save" data-id="${row.PersonID}" style="width:100%; text-align:left;" value="${row.Status_Note || ''}"></div>
                         </div>
                         <div class="crm-box box-farm">
                             <div class="crm-section-title" style="position: relative;">
@@ -461,27 +483,27 @@ function renderTable() {
                                 </div>
                             </div>
                             <div class="seamless-row" style="border:none; margin-bottom:0; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
-                                <span class="seamless-label">F อัธยาศัย</span> <select class="seamless-input ex-score-f" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;" onchange="triggerAutoSave('${row.PersonID}')">${getStarOptions(row.Score_Friendly)}</select>
+                                <span class="seamless-label">F อัธยาศัย</span> <select class="seamless-input ex-score-f trigger-save" data-id="${row.PersonID}" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;">${getStarOptions(row.Score_Friendly)}</select>
                             </div>
                             <div class="seamless-row" style="border:none; margin-bottom:0; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
-                                <span class="seamless-label">A ขยัน</span> <select class="seamless-input ex-score-a" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;" onchange="triggerAutoSave('${row.PersonID}')">${getStarOptions(row.Score_Active)}</select>
+                                <span class="seamless-label">A ขยัน</span> <select class="seamless-input ex-score-a trigger-save" data-id="${row.PersonID}" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;">${getStarOptions(row.Score_Active)}</select>
                             </div>
                             <div class="seamless-row" style="border:none; margin-bottom:0; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
-                                <span class="seamless-label">R สัมพันธ์</span> <select class="seamless-input ex-score-r" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;" onchange="triggerAutoSave('${row.PersonID}')">${getStarOptions(row.Score_Relation)}</select>
+                                <span class="seamless-label">R สัมพันธ์</span> <select class="seamless-input ex-score-r trigger-save" data-id="${row.PersonID}" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;">${getStarOptions(row.Score_Relation)}</select>
                             </div>
                             <div class="seamless-row" style="border:none; margin-bottom:0; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
-                                <span class="seamless-label">M กำลังซื้อ</span> <select class="seamless-input ex-score-m" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;" onchange="triggerAutoSave('${row.PersonID}')">${getStarOptions(row.Score_Money)}</select>
+                                <span class="seamless-label">M กำลังซื้อ</span> <select class="seamless-input ex-score-m trigger-save" data-id="${row.PersonID}" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;">${getStarOptions(row.Score_Money)}</select>
                             </div>
                             <div class="seamless-row" style="border:none; margin-bottom:0; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
-                                <span class="seamless-label">Au อำนาจ</span> <select class="seamless-input ex-score-au" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;" onchange="triggerAutoSave('${row.PersonID}')">${getStarOptions(row.Score_Authority)}</select>
+                                <span class="seamless-label">Au อำนาจ</span> <select class="seamless-input ex-score-au trigger-save" data-id="${row.PersonID}" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;">${getStarOptions(row.Score_Authority)}</select>
                             </div>
                             <div class="seamless-row" style="border:none; margin-bottom:0; padding-bottom:0; display:flex; justify-content:space-between; align-items:center;">
-                                <span class="seamless-label">N ปัญหา</span> <select class="seamless-input ex-score-n" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;" onchange="triggerAutoSave('${row.PersonID}')">${getStarOptions(row.Score_Need)}</select>
+                                <span class="seamless-label">N ปัญหา</span> <select class="seamless-input ex-score-n trigger-save" data-id="${row.PersonID}" style="letter-spacing:2px; font-size:0.95rem; width:130px; padding:0; text-align:right;">${getStarOptions(row.Score_Need)}</select>
                             </div>
                         </div>
                         <div class="crm-box box-note full-width">
                             <div class="crm-section-title">📝 STORY & NOTE</div>
-                            <textarea class="seamless-input seamless-textarea ex-note" oninput="triggerAutoSave('${row.PersonID}')">${row.Note || defaultNote}</textarea>
+                            <textarea class="seamless-input seamless-textarea ex-note trigger-save" data-id="${row.PersonID}">${row.Note || defaultNote}</textarea>
                         </div>
                     </div>
                 </div>
@@ -637,16 +659,17 @@ async function executeAutoSave(id) {
 
     payloadData.Last_Update = new Date().toISOString();
     
-    try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'UPDATE', sheet: "Contacts_Master", id: id, data: payloadData }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        const result = await response.json();
-        if (result.status === "success") {
-            const index = contactsData.findIndex(p => p.PersonID === id); 
-            if (index > -1) contactsData[index] = payloadData;
-            localStorage.setItem('buzzGuideContacts', JSON.stringify(contactsData)); 
-            setStatus('✅', false, 2000); syncMainRow(id); updateDashboard();
-        } else { setStatus('❌', false, 2000); }
-    } catch (error) { setStatus('❌', false, 2000); }
+    // 🌟 เรียกอัปเดตผ่าน API ส่วนกลาง (โค้ดสั้นลงมาก)
+    const result = await DbAPI.update(id, payloadData);
+    
+    if (result && result.status === "success") {
+        const index = contactsData.findIndex(p => p.PersonID === id); 
+        if (index > -1) contactsData[index] = payloadData;
+        localStorage.setItem('buzzGuideContacts', JSON.stringify(contactsData)); 
+        setStatus('✅', false, 2000); syncMainRow(id); updateDashboard();
+    } else { 
+        setStatus('❌', false, 2000); 
+    }
 }
 
 function syncMainRow(id) {
@@ -800,47 +823,39 @@ async function submitNewContact(e) {
         isNewData: true 
     }; 
     
-    // 4. ส่งข้อมูลเข้า API
-    try { 
-        const response = await fetch(API_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ action: 'CREATE', sheet: "Contacts_Master", data: [newContact] }), 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
-        }); 
-        const result = await response.json(); 
-        
-        if (result.status === "success") { 
-            contactsData.push(newContact); 
-            localStorage.setItem('buzzGuideContacts', JSON.stringify(contactsData)); 
-            
-            // 🌟 บังคับตารางให้เรียง "อัปเดตล่าสุดไว้บนสุด" เสมอ เพื่อให้เห็นคนที่เพิ่งเพิ่ม
-            currentSortCol = 'update';
-            currentSortDir = 'desc';
-            
-            // เคลียร์ช่องค้นหา
-            const searchInput = document.getElementById('searchInput');
-            if(searchInput) searchInput.value = ''; 
-            
-            closeAddModal(); 
-            updateDashboard(); 
-            resetPageAndRender(); // กลับไปหน้า 1 และวาดตารางใหม่
-            
-        } else { 
-            alert('❌ บันทึกข้อมูลบน Google Sheets ไม่สำเร็จ'); 
-        } 
-    } catch (err) { 
-        alert('❌ การเชื่อมต่อล้มเหลว กรุณาตรวจสอบอินเทอร์เน็ต'); 
-    } finally { 
-        // 5. คืนค่าปุ่ม
-        btn.disabled = false; 
-        btn.innerHTML = 'บันทึกรายชื่อ'; 
+    // 4. ส่งข้อมูลเข้า API (ผ่านส่วนกลาง)
+    const result = await DbAPI.create([newContact]);
+    
+    if (result && result.status === "success") { 
+        contactsData.push(newContact); 
+        localStorage.setItem('buzzGuideContacts', JSON.stringify(contactsData)); 
+        currentSortCol = 'update'; currentSortDir = 'desc'; // ดันคนใหม่ขึ้นบนสุด
+        const searchInput = document.getElementById('searchInput');
+        if(searchInput) searchInput.value = ''; 
+        closeAddModal(); updateDashboard(); resetPageAndRender(); 
+    } else { 
+        alert('❌ บันทึกข้อมูลบน Google Sheets ไม่สำเร็จ หรือการเชื่อมต่อล้มเหลว'); 
     } 
+    
+    // 5. คืนค่าปุ่ม
+    btn.disabled = false; btn.innerHTML = 'บันทึกรายชื่อ';
 }
 
-function deleteContact(id) { 
+// ฟังก์ชันลบรายชื่อ
+async function deleteContact(id) { 
     document.getElementById(`row-${id}`).style.opacity = '0.5'; 
-    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "DELETE", sheet: "Contacts_Master", id: id }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } })
-    .then(res => res.json()).then(r => { if(r.status === "success") { contactsData = contactsData.filter(p => p.PersonID !== id); localStorage.setItem('buzzGuideContacts', JSON.stringify(contactsData)); resetPageAndRender(); updateDashboard(); } }); 
+    
+    // 🌟 เลือกลบผ่าน API ส่วนกลาง
+    const result = await DbAPI.remove(id);
+    
+    if (result && result.status === "success") { 
+        contactsData = contactsData.filter(p => p.PersonID !== id); 
+        localStorage.setItem('buzzGuideContacts', JSON.stringify(contactsData)); 
+        resetPageAndRender(); updateDashboard(); 
+    } else {
+        document.getElementById(`row-${id}`).style.opacity = '1'; 
+        alert('❌ ลบรายชื่อไม่สำเร็จ โปรดลองอีกครั้ง');
+    }
 }
 
 // -----------------------------------------
@@ -854,3 +869,72 @@ function toggleHint(e, hintId) {
 }
 document.addEventListener('click', () => { document.querySelectorAll('.hint-popup.show').forEach(p => p.classList.remove('show')); });
 window.addEventListener('scroll', () => { document.querySelectorAll('.hint-popup.show').forEach(p => p.classList.remove('show')); }, true);
+
+// -----------------------------------------
+// 9. INITIALIZATION
+// -----------------------------------------
+window.onload = () => { 
+    fetchContacts(); 
+    const savedTheme = localStorage.getItem('buzzGuideTheme') || 'pikachu';
+    if (typeof setTheme === 'function') setTheme(savedTheme);
+    
+    // ❌ ลบ renderGuideView(); ออกจากตรงนี้แล้ว (ย้ายไปโหลดตอนคลิกแทน)
+};
+
+// ==========================================
+// 🌟 OPTIMIZATION: Event Delegation (V11.7)
+// ฝังเรดาร์ดักจับการคลิกและการพิมพ์ที่จุดเดียว
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const tbody = document.getElementById('contactsTableBody');
+    if (!tbody) return;
+
+    // 1. เรดาร์ดักจับการคลิก (Click Events)
+    tbody.addEventListener('click', function(e) {
+        // 1.1 คลิกขยายแถว (Row Expand)
+        const mainRow = e.target.closest('.main-row');
+        if (mainRow && !['SELECT', 'BUTTON', 'INPUT'].includes(e.target.tagName)) {
+            const id = mainRow.id.replace('row-', '');
+            toggleExpandRow(id);
+            return;
+        }
+
+        // 1.2 คลิกลบ Tag (ปุ่ม X)
+        if (e.target.classList.contains('tag-remove')) {
+            e.stopPropagation();
+            removeTag(e.target, e.target.dataset.id, e);
+            return;
+        }
+
+        // 1.3 คลิกเปลี่ยนสถานะ Tag สินค้า
+        const prodTag = e.target.closest('.product-tag');
+        if (prodTag && !e.target.classList.contains('tag-remove')) {
+            toggleModalProduct(prodTag, prodTag.dataset.id, e);
+            return;
+        }
+
+        // 1.4 คลิกเปลี่ยนสถานะ Tag ทักษะ
+        const skillTag = e.target.closest('.skill-tag-btn');
+        if (skillTag && !e.target.classList.contains('tag-remove')) {
+            toggleModalSkill(skillTag, skillTag.dataset.id, e);
+            return;
+        }
+        
+        // 1.5 คลิกปุ่ม 3 จุด (Action Menu)
+        const actionBtn = e.target.closest('.btn-action-dots');
+        if (actionBtn) {
+            e.stopPropagation();
+            toggleActionMenu(actionBtn.dataset.id);
+            return;
+        }
+    });
+
+    // 2. เรดาร์ดักจับการพิมพ์/แก้ข้อมูล (Input/Change Events สำหรับ Auto Save)
+    tbody.addEventListener('input', function(e) {
+        if (e.target.classList.contains('trigger-save')) triggerAutoSave(e.target.dataset.id);
+    });
+    
+    tbody.addEventListener('change', function(e) {
+        if (e.target.classList.contains('trigger-save')) triggerAutoSave(e.target.dataset.id);
+    });
+});

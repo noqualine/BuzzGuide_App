@@ -25,14 +25,14 @@ function setTheme(name, el) {
         if (savedOpt) savedOpt.classList.add('active');
     }
     
-    // 🌟 5. [เพิ่มใหม่ V11.6] อัปเดตสี Pokéball จิ๋วบน Topbar ทันที!
+    // 🌟 5. อัปเดตสี Pokéball จิ๋วบน Topbar (สีเอกลักษณ์โปเกมอน)
     const themeColorMap = {
-        'pikachu': '#FACC15',    // เหลือง
-        'charmander': '#F97316', // ส้ม
-        'squirtle': '#0EA5E9',   // ฟ้า
-        'bulbasaur': '#10B981',  // เขียว
-        'mew': '#F472B6',        // ชมพู
-        'gastly': '#A855F7'      // ม่วง
+        'pikachu': '#FACC15',    // เหลือง (Yellow)
+        'charmander': '#F97316', // ส้ม (Orange)
+        'squirtle': '#0EA5E9',   // ฟ้า (Blue)
+        'bulbasaur': '#10B981',  // เขียว (Green)
+        'mew': '#F472B6',        // ชมพู (Pink)
+        'gastly': '#A855F7'      // ม่วง (Purple)
     };
     
     const topbarBall = document.getElementById('topbarPokeball');

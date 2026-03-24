@@ -2,8 +2,6 @@
 // APP.JS - Core Application Logic (Buzz Guide - Cark UI Edition)
 // =========================================================================
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzxkUXB8S1LhwJERDd4HlrsMTLmvAV-MWBya0jqeB5QTEa1tjsdX2aXV4GVDuJajZWRnQ/exec";
-
 // -----------------------------------------
 // 1. INITIALIZE (ทำงานทันทีที่โหลดแอป)
 // -----------------------------------------

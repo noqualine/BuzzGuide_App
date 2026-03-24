@@ -779,3 +779,12 @@ body { transition: background-color 0.5s ease, color 0.3s ease; }
     transform: scale(1.15) rotate(15deg);
     box-shadow: var(--shadow-md);
 }
+
+/* เอฟเฟกต์ตอน Hover Pokéball ในเมนูเลือกธีมด่วน */
+.quick-theme-item:hover .pokeball-sm {
+    transform: scale(1.15) rotate(15deg);
+    box-shadow: var(--shadow-md);
+}
+.quick-theme-item:hover span {
+    color: var(--primary);
+}

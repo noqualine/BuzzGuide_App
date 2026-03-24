@@ -16,7 +16,7 @@
         <div class="sidebar-nav">
             <div class="nav-section">Main Menu</div>
             <div class="nav-item active" id="nav-contacts" onclick="switchView('contacts')">👥 รายชื่อผู้มุ่งหวัง</div>
-            <div class="nav-item">📅 ปฏิทินนัดหมาย</div>
+            <div class="nav-item" id="nav-guide" onclick="switchView('guide')">📘 คู่มือทำรายชื่อ</div> <div class="nav-item">📅 ปฏิทินนัดหมาย</div>
             <div class="nav-item">📊 รายงานยอดขาย</div>
             
             <div class="nav-section">Settings</div>
@@ -79,6 +79,8 @@
                         <div class="pagination-footer"></div>
                     </div>
                 </div>
+
+                <div id="guide-view" class="app-view"></div>
 
                 <div id="settings-view" class="app-view">
                     <div class="settings-wrapper">
@@ -211,15 +213,40 @@
     </div>
 </div>
 
-<div id="popThemeQuick" class="filter-popover" onclick="event.stopPropagation()" style="min-width: 220px; padding: 16px;">
-    <div style="font-weight:700; margin-bottom:12px; color:var(--text-main); border-bottom:1px solid var(--border-color); padding-bottom:8px;">🎨 เลือกธีมด่วน (Quick Theme)</div>
-    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; justify-items: center;">
-        <div class="theme-dot" style="background:#FACC15; width:32px; height:32px; font-size:1rem;" onclick="setTheme('pikachu'); document.getElementById('popThemeQuick').style.display='none';" title="Pikachu">⚡</div>
-        <div class="theme-dot" style="background:#F97316; width:32px; height:32px; font-size:1rem;" onclick="setTheme('charmander'); document.getElementById('popThemeQuick').style.display='none';" title="Charmander">🔥</div>
-        <div class="theme-dot" style="background:#0EA5E9; width:32px; height:32px; font-size:1rem;" onclick="setTheme('squirtle'); document.getElementById('popThemeQuick').style.display='none';" title="Squirtle">💧</div>
-        <div class="theme-dot" style="background:#10B981; width:32px; height:32px; font-size:1rem;" onclick="setTheme('bulbasaur'); document.getElementById('popThemeQuick').style.display='none';" title="Bulbasaur">🍃</div>
-        <div class="theme-dot" style="background:#F472B6; width:32px; height:32px; font-size:1rem;" onclick="setTheme('mew'); document.getElementById('popThemeQuick').style.display='none';" title="Mew (Dark)">✨</div>
-        <div class="theme-dot" style="background:#A855F7; width:32px; height:32px; font-size:1rem;" onclick="setTheme('gastly'); document.getElementById('popThemeQuick').style.display='none';" title="Gastly (Dark)">👻</div>
+<div id="popThemeQuick" class="filter-popover" onclick="event.stopPropagation()" style="min-width: 260px; padding: 16px;">
+    <div style="font-weight:700; margin-bottom:16px; color:var(--text-main); border-bottom:1px solid var(--border-color); padding-bottom:8px;">🎨 เลือกธีมด่วน (Quick Theme)</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; justify-items: center;">
+        
+        <div class="quick-theme-item" onclick="setTheme('pikachu'); document.getElementById('popThemeQuick').style.display='none';" style="display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer;" title="Pikachu">
+            <div class="pokeball-sm" style="--ball-color: #FACC15;"></div>
+            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">Pikachu</span>
+        </div>
+        
+        <div class="quick-theme-item" onclick="setTheme('charmander'); document.getElementById('popThemeQuick').style.display='none';" style="display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer;" title="Charmander">
+            <div class="pokeball-sm" style="--ball-color: #F97316;"></div>
+            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">Charmander</span>
+        </div>
+        
+        <div class="quick-theme-item" onclick="setTheme('squirtle'); document.getElementById('popThemeQuick').style.display='none';" style="display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer;" title="Squirtle">
+            <div class="pokeball-sm" style="--ball-color: #0EA5E9;"></div>
+            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">Squirtle</span>
+        </div>
+        
+        <div class="quick-theme-item" onclick="setTheme('bulbasaur'); document.getElementById('popThemeQuick').style.display='none';" style="display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer;" title="Bulbasaur">
+            <div class="pokeball-sm" style="--ball-color: #10B981;"></div>
+            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">Bulbasaur</span>
+        </div>
+        
+        <div class="quick-theme-item" onclick="setTheme('mew'); document.getElementById('popThemeQuick').style.display='none';" style="display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer;" title="Mew (Dark)">
+            <div class="pokeball-sm" style="--ball-color: #F472B6;"></div>
+            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">Mew</span>
+        </div>
+        
+        <div class="quick-theme-item" onclick="setTheme('gastly'); document.getElementById('popThemeQuick').style.display='none';" style="display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer;" title="Gastly (Dark)">
+            <div class="pokeball-sm" style="--ball-color: #A855F7;"></div>
+            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">Gastly</span>
+        </div>
+        
     </div>
 </div>
 
@@ -281,7 +308,10 @@
 <script>
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 </script>
-<script src="settings.js"></script>
-<script src="contacts.js"></script>
+    <script src="api.js" defer></script>
+    <script src="settings.js"></script>
+    <script src="guide.js"></script>
+    <script src="contacts.js"></script>
+
 </body>
 </html>
