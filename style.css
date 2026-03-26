@@ -788,3 +788,20 @@ body { transition: background-color 0.5s ease, color 0.3s ease; }
 .quick-theme-item:hover span {
     color: var(--primary);
 }
+
+/* 🌟 บีบช่องว่างระหว่างแถวรายชื่อ และ Drawer ให้กระชับขึ้น */
+.expanded-row > td {
+    padding-top: 0 !important; /* ลบช่องว่างส่วนเกินของเซลล์ตารางออก */
+}
+
+.drawer-container.crm-drawer {
+    margin-top: 0 !important; 
+    padding-top: 12px !important; /* ลด padding ด้านบนของกล่องใหญ่ */
+    border-top-left-radius: 0; /* ทำให้มุมบนเหลี่ยมเนียนติดกับแถวรายชื่อ */
+    border-top-right-radius: 0;
+}
+
+.drawer-header-actions {
+    padding: 4px 20px 12px 20px !important; /* ลดความสูงของส่วน Header Drawer */
+    margin-bottom: 8px !important; /* ลดระยะห่างก่อนถึงข้อมูล Profile */
+}

@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Buzz Guide CRM - Pokémon Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="mobile.css" media="screen and (max-width: 768px)">
 </head>
@@ -183,11 +185,11 @@
 </div>
 
 <div id="popScore" class="filter-popover" onclick="event.stopPropagation()">
-    <div style="font-weight:700; margin-bottom:8px; color:var(--primary); border-bottom:1px solid var(--border-color); padding-bottom:4px;">⭐ กรองตามศักยภาพ</div>
+    <div style="font-weight:700; margin-bottom:8px; color:var(--primary); border-bottom:1px solid var(--border-color); padding-bottom:4px;">🎯 กรองตามศักยภาพ (10 คะแนน)</div>
     <label><input type="radio" name="rad-score" value="all" checked onchange="resetPageAndRender()"> 🌟 แสดงทั้งหมด</label>
-    <label><input type="radio" name="rad-score" value="4" onchange="resetPageAndRender()"> ⭐ 4 ดาวขึ้นไป (High)</label>
-    <label><input type="radio" name="rad-score" value="3" onchange="resetPageAndRender()"> ⭐ 3 ดาวขึ้นไป (Mid)</label>
-    <label><input type="radio" name="rad-score" value="low" onchange="resetPageAndRender()"> 🔻 ต่ำกว่า 3 ดาว (Low)</label>
+    <label><input type="radio" name="rad-score" value="8" onchange="resetPageAndRender()"> 🎯 8 คะแนนขึ้นไป (High)</label>
+    <label><input type="radio" name="rad-score" value="5" onchange="resetPageAndRender()"> 🎯 5 คะแนนขึ้นไป (Mid)</label>
+    <label><input type="radio" name="rad-score" value="low" onchange="resetPageAndRender()"> 🔻 ต่ำกว่า 5 คะแนน (Low)</label>
 </div>
 
 <div id="popUpdateDate" class="filter-popover" onclick="event.stopPropagation()" style="width: 400px; max-width: 90vw;">
